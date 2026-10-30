@@ -36,6 +36,7 @@ export default function RootLayout() {
     <>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+        <Stack.Screen name="index" />
         <Stack.Protected guard={status === 'loading' || status === 'signedOut'}>
           <Stack.Screen name="(auth)" />
         </Stack.Protected>
