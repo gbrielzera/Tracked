@@ -21,6 +21,10 @@ exigida (Seções 1–5 abaixo).
 | Trending | Só global |
 | Notificações | In-app (tempo real) + push |
 | Entrega | Acadêmica (Expo Go/APK); arquitetura pronta para evoluir |
+| Visitante | Login anônimo do Supabase: navega (Trending, Pesquisa, detalhes, reviews públicas) e **comenta** com limite diário. Não avalia, não curte, não segue. Pode virar conta depois, mantendo os comentários |
+| Rankings | Dentro da aba Trending: seletor "Em alta" (Deezer) / "Mais bem avaliados" (comunidade). Só contam usuários com conta |
+| Ranking de artistas | Dois separados: "Artistas mais bem avaliados" (reviews diretas) e "Melhor discografia" (média das faixas/álbuns) |
+| Front-end | Usar a skill `frontend-design@claude-plugins-official` nas telas (F4–F6) |
 
 ### Identidade e infraestrutura
 | Item | Valor |
@@ -136,6 +140,21 @@ supabase/migrations/  supabase/functions/{music-info,send-push}/
   `review_id?`, `comment_id?`, `read_at?`, `created_at`. Criadas **só por triggers** em
   follows/likes/comments (nunca notifica a si mesmo; deduplica likes repetidos).
 - **push_tokens**: `token PK`, `user_id`, `platform`, `updated_at`.
+- **reports** (denúncias): `id`, `reporter_id`, `review_id?`, `comment_id?`, `reason`, `created_at`.
+  CHECK de exatamente um alvo. Moderação manual pelo dashboard do Supabase na v1.
+
+### Visitantes (login anônimo)
+- `supabase.auth.signInAnonymously()` cria um usuário real com `is_anonymous = true` no JWT. O
+  trigger de signup cria o `profiles` com `username = null` e `display_name = 'Visitante'`
+  (+ 4 dígitos). `username` passa a aceitar null, mas o onboarding continua obrigatório para conta.
+- Helper SQL `is_guest()` = `coalesce((auth.jwt()->>'is_anonymous')::boolean, false)`.
+- **Limite de comentários**: trigger `before insert` em `review_comments` conta os comentários do
+  autor nas últimas 24h. Visitante: máx. **3/dia**. Conta: máx. 100/dia (anti-spam). Estourou → erro
+  `P0001 'comment_limit'`, que a UI traduz.
+- Proteção extra: rate limit nativo do Supabase para criação de anônimos por IP (padrão 30/h).
+  Contas anônimas sem atividade há 30 dias são removidas por um job `pg_cron`.
+- **Promover para conta**: `updateUser({ email, password })` ou `linkIdentity` (Google). O `uid` é o
+  mesmo, então os comentários continuam dele; em seguida ele passa pelo onboarding (@).
 
 ### Regras RLS (essenciais)
 - `profiles`: SELECT para todos os autenticados; UPDATE só no próprio.
@@ -147,6 +166,9 @@ supabase/migrations/  supabase/functions/{music-info,send-push}/
 - `favorite_artists`: SELECT para todos; escrita só do próprio.
 - `notifications`, `push_tokens`: só o dono lê/atualiza; INSERT só via trigger/security definer.
 - `media_items`: SELECT para todos; escrita só via RPC.
+- **Visitantes**: todo INSERT/UPDATE em `reviews`, `review_likes`, `follows`, `favorite_artists`
+  e `push_tokens` exige `NOT is_guest()`. Em `review_comments` e `reports`, o visitante pode inserir.
+- `reports`: INSERT por qualquer autenticado (inclusive visitante); SELECT só pelo próprio denunciante.
 
 ### Lógica derivada
 - **Média do item**: trigger em `reviews` recalcula `avg_rating`/`ratings_count`. A média é
@@ -157,6 +179,16 @@ supabase/migrations/  supabase/functions/{music-info,send-push}/
   timestamp não são puladas. O índice `(created_at desc, id desc)` cobre a consulta. O mesmo
   padrão vale para as listas de reviews do perfil e do item. A RLS já remove as privadas. Retorna o autor, o media_item e as contagens de likes/comentários
   e se eu curti.
+- **Rankings "Mais bem avaliados"**: *materialized view* `rankings` atualizada **a cada hora**
+  via `pg_cron` (+ refresh manual por RPC para a demo). Usa só reviews (que visitantes não podem
+  criar, então só contas entram). Comentários não influenciam a nota.
+  - Nota ponderada (média bayesiana): `score = (v/(v+m))·R + (m/(v+m))·C`, em que `v` é o número de
+    reviews do item, `R` a média do item, `C` a média global do tipo (faixa/álbum/artista) e `m` o
+    mínimo de votos (configurável; começa em 3). Exige `v ≥ 2` para entrar.
+  - Listas: Músicas, Álbuns, **Artistas mais bem avaliados** (reviews diretas, kind = artist) e
+    **Melhor discografia** (média das reviews de faixas e álbuns agrupadas por artista). Para agrupar,
+    `media_items` ganha `artist_external_id` (preenchido no snapshot do Deezer).
+  - RPC `get_rankings(kind, limit, offset)` lê da view (índice por `kind, score desc`).
 - **Sugestões do Top 5**: RPC que agrupa as reviews do usuário por artista (kind artist ou
   `artist_name` das faixas/álbuns) e ordena por média e quantidade.
 - **Busca de usuários**: `ILIKE` em `username`/`display_name` com índice `pg_trgm`.
@@ -204,7 +236,8 @@ item, perfil e feed.
 **F1 Banco**
 3. Migration: enums, tabelas, constraints e índices (Seção 3).
 4. Migration: políticas RLS de todas as tabelas.
-5. Migration: triggers (profile no signup, médias, notificações) e RPCs (`ensure_media_item` com regra de 30 dias, `get_feed` com cursor `(created_at,id)`, `suggest_favorite_artists`, `search_users`).
+5. Migration: triggers (profile no signup — inclusive visitante, médias, notificações, limite de comentários) e RPCs (`ensure_media_item` com regra de 30 dias, `get_feed` com cursor `(created_at,id)`, `suggest_favorite_artists`, `search_users`).
+5b. Migration: helper `is_guest()` aplicado nas políticas, tabela `reports`, materialized view `rankings` + RPC `get_rankings` + jobs `pg_cron` (refresh hourly, limpeza de anônimos inativos). Ativar "Anonymous sign-ins" no dashboard.
 6. Bucket `avatars` (caminho fixo por uid) + policies; Edge Function `delete-account`; gerar `database.types.ts`.
 
 **F2 Autenticação** (validar no APK desde o início, não só na F7)
@@ -217,6 +250,9 @@ item, perfil e feed.
    **Smoke test obrigatório nesta tarefa:** gerar o development build/APK no EAS e fazer o login
    Google num Android físico (app aberto e app fechado) + Expo Go no iOS. A F2 só fecha com isso passando.
 9. Onboarding obrigatório: @ único (validação ao vivo), nome exibido e foto.
+9b. Tela de boas-vindas: "Entrar", "Criar conta", "Continuar como visitante". Guarda de rotas:
+    o visitante acessa Trending, Pesquisa e detalhes; Feed, Perfil, avaliar, curtir e seguir mostram
+    um convite para criar conta. Fluxo "promover visitante para conta" (e-mail ou Google) → onboarding.
 
 **F3 Camada de música**
 10. Interface `MusicProvider` + tipos normalizados + adaptador Deezer (search por tipo, track, album+tracks, artist+top+albums, chart).
@@ -224,7 +260,7 @@ item, perfil e feed.
 
 **F4 Telas de catálogo**
 12. Componente `StarRating` (meia estrela por toque/arraste, modo leitura, acessível).
-13. Trending: lista do chart global (faixas/álbuns) → detalhe.
+13. Trending com seletor "Em alta" (chart global do Deezer, faixas/álbuns) e "Mais bem avaliados" (sub-abas Músicas, Álbuns, Artistas, Melhor discografia, via `get_rankings`, mostrando nota ponderada e nº de avaliações) → detalhe.
 14. Pesquisa: segmentos Músicas/Álbuns/Artistas/Usuários, busca por envio (Enter/botão), paginação sob demanda e tratamento do erro de cota do Deezer (código 4).
 15. Detalhe da faixa: capa, artista, álbum (link), lançamento, duração, descrição, média, formulário da minha review e reviews de outros.
 16. Detalhe do álbum: mesmo padrão + lista de faixas (link para cada uma).
@@ -237,7 +273,8 @@ item, perfil e feed.
 21. Editor do Top 5: busca de artista, reordenar e sugestões.
 22. Seguir/deixar de seguir + listas de seguidores/seguindo.
 23. Feed com scroll infinito, pull-to-refresh e estado vazio ("siga pessoas").
-24. Curtidas (otimista) e tela de detalhe da review com comentários.
+24. Curtidas (otimista) e tela de detalhe da review com comentários (visitante comenta; contador "X de 3 hoje"; mensagem ao atingir o limite com convite para criar conta).
+24b. Denunciar review/comentário (menu "…" → motivo) e filtro simples de palavrões no envio.
 
 **F6 Notificações**
 25. Tela de notificações + badge com Realtime + marcar como lidas.
@@ -258,6 +295,9 @@ item, perfil e feed.
 - Login Google funciona no APK Android com o app aberto e com o app fechado.
 - Excluir a conta remove o avatar do Storage e todos os dados do usuário.
 - Se o Deezer devolver o erro de cota, o app tenta de novo e mostra uma mensagem amigável, sem crash.
+- Visitante navega e comenta; o 4º comentário em 24h é recusado **pelo banco** (teste de RLS/trigger). Visitante não consegue avaliar, curtir nem seguir, nem por chamada direta à API.
+- Visitante que cria conta mantém os comentários anteriores.
+- "Mais bem avaliados" ordena pela média bayesiana. Um item com uma única nota 5 não passa à frente de um com muitas notas 4,5. Visitantes não influenciam os rankings.
 - Curtir e comentar funcionam. O autor recebe a notificação in-app em tempo real e push no Android (development build).
 - Todos os testes de F7 passam. O app roda em Android (APK) e iOS (Expo Go) sem crash nos fluxos acima.
 - Nenhum custo: apenas free tiers (Supabase, EAS, Deezer, Last.fm).
