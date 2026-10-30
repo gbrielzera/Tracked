@@ -43,6 +43,17 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "2b30385b-56dd-4cd8-9fd7-785b7e376ba4"
+      }
+    },
+    "owner": "gbrielzera"
   }
 }
