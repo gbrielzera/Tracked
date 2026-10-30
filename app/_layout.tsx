@@ -18,6 +18,16 @@ import { colors } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
 
+// Telas de detalhe: cabeçalho discreto só com o botão de voltar.
+const detailOptions = {
+  headerShown: true,
+  title: '',
+  headerShadowVisible: false,
+  headerStyle: { backgroundColor: colors.background },
+  headerTintColor: colors.paper,
+  headerBackButtonDisplayMode: 'minimal',
+} as const;
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     BricolageGrotesque_400Regular,
@@ -47,6 +57,10 @@ export default function RootLayout() {
         </Stack.Protected>
         <Stack.Protected guard={status === 'guest' || status === 'ready'}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="track/[id]" options={detailOptions} />
+          <Stack.Screen name="album/[id]" options={detailOptions} />
+          <Stack.Screen name="artist/[id]" options={detailOptions} />
+          <Stack.Screen name="user/[username]" options={detailOptions} />
         </Stack.Protected>
         <Stack.Protected guard={status === 'guest'}>
           <Stack.Screen name="upgrade" options={{ presentation: 'modal' }} />

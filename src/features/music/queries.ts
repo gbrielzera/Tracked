@@ -1,0 +1,48 @@
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { musicProvider, searchMedia } from '@/services/music';
+import type { ArtistRef, MediaKind } from '@/services/music';
+
+const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
+
+export const useChart = (limit = 25) =>
+  useQuery({ queryKey: ['chart', limit], queryFn: () => musicProvider.getChart(limit), staleTime: HOUR });
+
+export const useTrack = (id: string) =>
+  useQuery({ queryKey: ['deezer', 'track', id], queryFn: () => musicProvider.getTrack(id), staleTime: DAY });
+
+export const useAlbum = (id: string) =>
+  useQuery({ queryKey: ['deezer', 'album', id], queryFn: () => musicProvider.getAlbum(id), staleTime: DAY });
+
+export const useArtist = (id: string) =>
+  useQuery({ queryKey: ['deezer', 'artist', id], queryFn: () => musicProvider.getArtist(id), staleTime: DAY });
+
+export const useArtistTopTracks = (id: string) =>
+  useQuery({
+    queryKey: ['deezer', 'artist', id, 'top'],
+    queryFn: () => musicProvider.getArtistTopTracks(id, 10),
+    staleTime: DAY,
+  });
+
+export function useArtistAlbums(artist: ArtistRef | undefined) {
+  return useInfiniteQuery({
+    queryKey: ['deezer', 'artist', artist?.id, 'albums'],
+    enabled: !!artist,
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => musicProvider.getArtistAlbums(artist!, { index: pageParam, limit: 20 }),
+    getNextPageParam: (last) => last.nextIndex ?? undefined,
+    staleTime: DAY,
+  });
+}
+
+// A busca só roda depois que o usuário envia (Enter/botão), para poupar a cota do Deezer.
+export function useSearch(kind: MediaKind, submittedQuery: string) {
+  return useInfiniteQuery({
+    queryKey: ['search', kind, submittedQuery],
+    enabled: submittedQuery.length >= 2,
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => searchMedia(kind, submittedQuery, { index: pageParam }),
+    getNextPageParam: (last) => last.nextIndex ?? undefined,
+    staleTime: 10 * 60 * 1000,
+  });
+}
