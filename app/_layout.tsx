@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,6 +12,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/bricolage-grotesque';
 import { useAuthBootstrap } from '@/features/auth/bootstrap';
+import { queryClient } from '@/lib/queryClient';
 import { useAuthStatus } from '@/stores/auth';
 import { colors } from '@/theme';
 
@@ -33,7 +35,7 @@ export default function RootLayout() {
   }, [ready]);
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="index" />
@@ -52,6 +54,6 @@ export default function RootLayout() {
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="auth/reset-password" />
       </Stack>
-    </>
+    </QueryClientProvider>
   );
 }
