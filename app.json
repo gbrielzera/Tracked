@@ -7,11 +7,28 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#14181c",
+    "backgroundColor": "#17121F",
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-web-browser",
+      "expo-font",
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#17121F",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Tracked usa suas fotos para você escolher a foto de perfil."
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": false,
@@ -20,7 +37,7 @@
     "android": {
       "package": "com.gbrielzera.tracked",
       "adaptiveIcon": {
-        "backgroundColor": "#14181c",
+        "backgroundColor": "#17121F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"

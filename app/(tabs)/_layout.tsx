@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/theme';
+import { colors, fonts } from '@/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -16,10 +16,13 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.text,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textMuted,
+        headerShadowVisible: false,
+        headerTintColor: colors.paper,
+        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 22 },
+        tabBarStyle: { backgroundColor: colors.sleeve, borderTopColor: colors.groove },
+        tabBarActiveTintColor: colors.mustard,
+        tabBarInactiveTintColor: colors.fog,
+        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 12 },
       }}
     >
       {screens.map(({ name, title, icon }) => (
@@ -29,11 +32,7 @@ export default function TabsLayout() {
           options={{
             title,
             tabBarIcon: ({ focused, size }) => (
-              <Ionicons
-                name={icon}
-                size={size}
-                color={focused ? colors.accent : colors.textMuted}
-              />
+              <Ionicons name={icon} size={size} color={focused ? colors.mustard : colors.fog} />
             ),
           }}
         />
