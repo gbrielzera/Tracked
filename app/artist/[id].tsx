@@ -6,6 +6,7 @@ import { MediaRow } from '@/components/MediaRow';
 import { ErrorState, LoadingState } from '@/components/states';
 import { DescriptionBlock } from '@/features/music/DescriptionBlock';
 import { useArtist, useArtistAlbums, useArtistTopTracks } from '@/features/music/queries';
+import { useRefreshItem } from '@/features/reviews/refresh';
 import { RatingSummary } from '@/features/reviews/RatingSummary';
 import { ReviewSection } from '@/features/reviews/ReviewSection';
 import { formatCount, formatDuration } from '@/lib/format';
@@ -29,6 +30,9 @@ export default function ArtistScreen() {
   const artist = artistQuery.data;
   const top = useArtistTopTracks(id);
   const albums = useArtistAlbums(artist ? { id: artist.id, name: artist.name } : undefined);
+  const refresh = useRefreshItem('artist', id, () =>
+    Promise.all([artistQuery.refetch(), top.refetch(), albums.refetch()]),
+  );
 
   if (artistQuery.isPending) return <LoadingState />;
   if (artistQuery.isError) return <ErrorState error={artistQuery.error} onRetry={() => void artistQuery.refetch()} />;
@@ -36,7 +40,7 @@ export default function ArtistScreen() {
   const albumItems = albums.data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
-    <DetailLayout>
+    <DetailLayout onRefresh={refresh}>
       <DetailHero coverUri={artist!.image?.xl} round title={artist!.name}>
         <Facts
           items={[

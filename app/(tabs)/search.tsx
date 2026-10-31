@@ -1,23 +1,35 @@
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MediaRow } from '@/components/MediaRow';
+import { PullRefresh } from '@/components/PullRefresh';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { useSearch } from '@/features/music/queries';
 import { useUserSearch } from '@/features/search/queries';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { useRefresh } from '@/lib/useRefresh';
 import type { MediaItem } from '@/services/music';
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 
-type Segment = 'track' | 'album' | 'artist' | 'user';
+type Kind = 'track' | 'album' | 'artist' | 'user';
+type Segment = 'all' | Kind;
 
 const SEGMENTS = [
+  { key: 'all' as const, label: 'Tudo' },
   { key: 'track' as const, label: 'Músicas' },
   { key: 'album' as const, label: 'Álbuns' },
   { key: 'artist' as const, label: 'Artistas' },
   { key: 'user' as const, label: 'Pessoas' },
 ];
+
+const TITLES: Record<Kind, string> = { track: 'Músicas', album: 'Álbuns', artist: 'Artistas', user: 'Pessoas' };
+const KINDS: Kind[] = ['track', 'album', 'artist', 'user'];
+
+// Na aba "Tudo" cada seção mostra só os primeiros; "Ver todos" abre o filtro.
+const PREVIEW = 4;
+const DEBOUNCE_MS = 400;
 
 type Row = {
   key: string;
@@ -28,43 +40,140 @@ type Row = {
   href: string;
 };
 
+type ListItem =
+  | { type: 'header'; key: string; kind: Kind; showAll: boolean }
+  | { type: 'row'; key: string; row: Row };
+
 function rowFor(item: MediaItem): Row {
   switch (item.kind) {
     case 'track':
-      return { key: item.id, title: item.title, subtitle: item.artist.name, cover: item.album?.cover?.sm ?? null, round: false, href: `/track/${item.id}` };
+      return { key: `track-${item.id}`, title: item.title, subtitle: item.artist.name, cover: item.album?.cover?.sm ?? null, round: false, href: `/track/${item.id}` };
     case 'album':
-      return { key: item.id, title: item.title, subtitle: item.artist.name, cover: item.cover?.sm ?? null, round: false, href: `/album/${item.id}` };
+      return { key: `album-${item.id}`, title: item.title, subtitle: item.artist.name, cover: item.cover?.sm ?? null, round: false, href: `/album/${item.id}` };
     case 'artist':
-      return { key: item.id, title: item.name, subtitle: null, cover: item.image?.sm ?? null, round: true, href: `/artist/${item.id}` };
+      return { key: `artist-${item.id}`, title: item.name, subtitle: null, cover: item.image?.sm ?? null, round: true, href: `/artist/${item.id}` };
   }
 }
 
 export default function SearchScreen() {
   const router = useRouter();
   const [text, setText] = useState('');
-  // A consulta só muda quando o usuário envia: poupa a cota do Deezer.
-  const [submitted, setSubmitted] = useState('');
-  const [segment, setSegment] = useState<Segment>('track');
+  // O texto que de fato busca: acompanha a digitação (com pausa) ou o Enter, que não espera.
+  const [query, setQuery] = useState('');
+  const debounced = useDebouncedValue(text.trim(), DEBOUNCE_MS);
+  useEffect(() => setQuery(debounced), [debounced]);
 
-  const media = useSearch(segment === 'user' ? 'track' : segment, segment === 'user' ? '' : submitted);
-  const users = useUserSearch(segment === 'user' ? submitted : '');
+  // O toque no filtro acende o botão na hora; a lista troca logo depois, sem travar o toque.
+  const [segment, setSegment] = useState<Segment>('all');
+  const shown = useDeferredValue(segment);
 
-  const submit = () => {
-    const value = text.trim();
-    if (value.length >= 2) setSubmitted(value);
-  };
+  const searched = query.length >= 2;
+  const want = (kind: Kind) => (searched && (shown === 'all' || shown === kind) ? query : '');
 
-  const rows = useMemo<Row[]>(() => {
-    if (segment === 'user') {
-      return (users.data ?? []).map((u) => ({
-        key: u.id, title: u.displayName, subtitle: `@${u.username}`, cover: u.avatarUrl, round: true, href: `/user/${u.username}`,
-      }));
-    }
-    return (media.data?.pages ?? []).flatMap((page) => page.items).map(rowFor);
-  }, [segment, users.data, media.data]);
+  const tracks = useSearch('track', want('track'));
+  const albums = useSearch('album', want('album'));
+  const artists = useSearch('artist', want('artist'));
+  const users = useUserSearch(want('user'));
 
-  const active = segment === 'user' ? users : media;
-  const searched = submitted.length >= 2;
+  const rowsByKind = useMemo<Record<Kind, Row[]>>(() => {
+    const media = (q: { data?: { pages: { items: MediaItem[] }[] } }) =>
+      (q.data?.pages ?? []).flatMap((page) => page.items).map(rowFor);
+    return {
+      track: media(tracks),
+      album: media(albums),
+      artist: media(artists),
+      user: (users.data ?? []).map((u) => ({
+        key: `user-${u.id}`, title: u.displayName, subtitle: `@${u.username}`, cover: u.avatarUrl, round: true, href: `/user/${u.username}`,
+      })),
+    };
+  }, [tracks.data, albums.data, artists.data, users.data]);
+
+  const queryByKind = { track: tracks, album: albums, artist: artists, user: users };
+  const active = (shown === 'all' ? KINDS : [shown]).map((kind) => queryByKind[kind]);
+
+  const items = useMemo<ListItem[]>(() => {
+    if (shown !== 'all') return rowsByKind[shown].map((row) => ({ type: 'row', key: row.key, row }));
+    return KINDS.flatMap((kind): ListItem[] => {
+      const rows = rowsByKind[kind];
+      if (rows.length === 0) return [];
+      return [
+        { type: 'header', key: `header-${kind}`, kind, showAll: rows.length > PREVIEW },
+        ...rows.slice(0, PREVIEW).map((row): ListItem => ({ type: 'row', key: row.key, row })),
+      ];
+    });
+  }, [shown, rowsByKind]);
+
+  const refresh = useRefresh(() => Promise.all(active.map((q) => q.refetch())));
+
+  const loading = searched && items.length === 0 && active.some((q) => q.isFetching);
+  const allFailed = searched && active.every((q) => q.isError);
+  const someFailed = searched && !allFailed && active.some((q) => q.isError);
+
+  const single = shown !== 'all' ? shown : null;
+  const singleQuery = single && single !== 'user' ? queryByKind[single] : null;
+
+  let body: React.ReactNode;
+  if (!searched) {
+    body = <EmptyState title="O que você quer avaliar?" body="Digite pelo menos 2 letras. Os resultados aparecem enquanto você escreve." />;
+  } else if (loading) {
+    body = <LoadingState />;
+  } else if (allFailed) {
+    body = (
+      <ErrorState
+        error={active.find((q) => q.isError)?.error}
+        message={shown === 'user' ? 'Não foi possível buscar pessoas. Tente de novo.' : undefined}
+        onRetry={() => void refresh.onRefresh()}
+      />
+    );
+  } else if (items.length === 0) {
+    body = <EmptyState title="Nada encontrado" body={`Nenhum resultado para "${query}". Tente outro nome.`} />;
+  } else {
+    body = (
+      <FlatList
+        data={items}
+        keyExtractor={(item) => item.key}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={styles.list}
+        initialNumToRender={10}
+        windowSize={7}
+        refreshControl={<PullRefresh refreshing={refresh.refreshing} onRefresh={() => void refresh.onRefresh()} />}
+        onEndReachedThreshold={0.5}
+        onEndReached={() => {
+          if (singleQuery?.hasNextPage && !singleQuery.isFetchingNextPage) void singleQuery.fetchNextPage();
+        }}
+        ListFooterComponent={
+          singleQuery?.isFetchingNextPage ? (
+            <ActivityIndicator color={colors.mustard} style={styles.footer} />
+          ) : someFailed ? (
+            <Text style={styles.partial}>Algumas buscas falharam. Puxe para baixo para tentar de novo.</Text>
+          ) : undefined
+        }
+        renderItem={({ item }) =>
+          item.type === 'header' ? (
+            <View style={styles.header}>
+              <Text style={styles.headerTitle} accessibilityRole="header">
+                {TITLES[item.kind]}
+              </Text>
+              {item.showAll ? (
+                <Pressable onPress={() => setSegment(item.kind)} hitSlop={10} accessibilityRole="button">
+                  <Text style={styles.headerLink}>Ver todos</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : (
+            <MediaRow
+              title={item.row.title}
+              subtitle={item.row.subtitle}
+              coverUri={item.row.cover}
+              round={item.row.round}
+              onPress={() => router.push(item.row.href as never)}
+            />
+          )
+        }
+      />
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -74,7 +183,10 @@ export default function SearchScreen() {
           <TextInput
             value={text}
             onChangeText={setText}
-            onSubmitEditing={submit}
+            onSubmitEditing={() => {
+              setQuery(text.trim());
+              Keyboard.dismiss();
+            }}
             placeholder="Músicas, álbuns, artistas ou pessoas"
             placeholderTextColor={colors.fog}
             selectionColor={colors.mustard}
@@ -85,60 +197,21 @@ export default function SearchScreen() {
             style={styles.input}
           />
           {text.length > 0 ? (
-            <Pressable onPress={() => setText('')} hitSlop={12} accessibilityRole="button" accessibilityLabel="Limpar busca">
+            <Pressable
+              onPress={() => {
+                setText('');
+                setQuery('');
+              }}
+              hitSlop={12} accessibilityRole="button" accessibilityLabel="Limpar busca">
               <Ionicons name="close-circle" size={20} color={colors.fog} />
             </Pressable>
           ) : null}
         </View>
-        <Pressable onPress={submit} accessibilityRole="button" style={styles.searchButton}>
-          <Text style={styles.searchButtonLabel}>Buscar</Text>
-        </Pressable>
       </View>
 
       <SegmentedControl options={SEGMENTS} value={segment} onChange={setSegment} />
 
-      {!searched ? (
-        <EmptyState
-          title="O que você quer avaliar?"
-          body="Digite pelo menos 2 letras e toque em Buscar."
-        />
-      ) : active.isFetching && rows.length === 0 ? (
-        <LoadingState />
-      ) : active.isError ? (
-        <ErrorState
-          error={active.error}
-          message={segment === 'user' ? 'Não foi possível buscar pessoas. Tente de novo.' : undefined}
-          onRetry={() => void active.refetch()}
-        />
-      ) : rows.length === 0 ? (
-        <EmptyState title="Nada encontrado" body={`Nenhum resultado para "${submitted}". Tente outro nome.`} />
-      ) : (
-        <FlatList
-          data={rows}
-          keyExtractor={(row) => row.key}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          contentContainerStyle={styles.list}
-          onEndReachedThreshold={0.5}
-          onEndReached={() => {
-            if (segment !== 'user' && media.hasNextPage && !media.isFetchingNextPage) void media.fetchNextPage();
-          }}
-          ListFooterComponent={
-            segment !== 'user' && media.isFetchingNextPage ? (
-              <ActivityIndicator color={colors.mustard} style={styles.footer} />
-            ) : undefined
-          }
-          renderItem={({ item }) => (
-            <MediaRow
-              title={item.title}
-              subtitle={item.subtitle}
-              coverUri={item.cover}
-              round={item.round}
-              onPress={() => router.push(item.href as never)}
-            />
-          )}
-        />
-      )}
+      {body}
     </View>
   );
 }
@@ -159,15 +232,17 @@ const styles = StyleSheet.create({
     borderColor: colors.groove,
   },
   input: { flex: 1, color: colors.paper, fontFamily: fonts.regular, fontSize: 16, paddingVertical: 10 },
-  searchButton: {
-    minHeight: 48,
-    paddingHorizontal: 16,
-    borderRadius: radius.button,
-    backgroundColor: colors.mustard,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchButtonLabel: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
   list: { paddingBottom: 24 },
   footer: { paddingVertical: 16 },
+  partial: { fontFamily: fonts.regular, fontSize: 14, color: colors.fog, textAlign: 'center', padding: spacing.md },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 4,
+  },
+  headerTitle: { fontFamily: fonts.bold, fontSize: 18, color: colors.paper },
+  headerLink: { fontFamily: fonts.bold, fontSize: 14, color: colors.teal },
 });

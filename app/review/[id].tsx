@@ -4,11 +4,13 @@ import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { CommentRow } from '@/components/CommentRow';
+import { PullRefresh } from '@/components/PullRefresh';
 import { ReportModal } from '@/components/ReportModal';
 import { ReviewCardView } from '@/components/ReviewCardView';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { CommentComposer } from '@/features/reviews/CommentComposer';
 import { useComments, useDeleteComment, useReport, useReviewDetail } from '@/features/reviews/interactions';
+import { useRefresh } from '@/lib/useRefresh';
 import { useAuth } from '@/stores/auth';
 import { colors, fonts, spacing, type } from '@/theme';
 
@@ -26,6 +28,7 @@ export default function ReviewScreen() {
   const report = useReport();
   const [target, setTarget] = useState<ReportTarget | null>(null);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const refresh = useRefresh(() => Promise.all([review.refetch(), comments.refetch()]));
 
   // O campo de comentário fica no fim da lista: ao abrir o teclado, leva a tela até ele.
   useEffect(() => {
@@ -75,6 +78,7 @@ export default function ReviewScreen() {
     <KeyboardAvoidingView style={styles.flex} behavior="padding">
       <ScrollView
         ref={scrollRef}
+        refreshControl={<PullRefresh refreshing={refresh.refreshing} onRefresh={() => void refresh.onRefresh()} />}
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
         keyboardShouldPersistTaps="handled"

@@ -1,6 +1,7 @@
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { GuestGate } from '@/components/GuestGate';
+import { PullRefresh } from '@/components/PullRefresh';
 import { ReviewCardView } from '@/components/ReviewCardView';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { useFeed } from '@/features/social/queries';
@@ -54,10 +55,9 @@ export default function FeedScreen() {
       keyExtractor={(review) => review.id}
       renderItem={({ item }) => <ReviewCardView review={item} showAuthor showMedia />}
       refreshControl={
-        <RefreshControl
+        <PullRefresh
           refreshing={feed.isRefetching && !feed.isFetchingNextPage}
           onRefresh={() => void feed.refetch()}
-          tintColor={colors.mustard}
         />
       }
       onEndReachedThreshold={0.5}

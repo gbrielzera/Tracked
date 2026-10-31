@@ -1,9 +1,10 @@
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { FavoriteStrip } from '@/components/FavoriteStrip';
 import { ProfileStats } from '@/components/ProfileStats';
+import { PullRefresh } from '@/components/PullRefresh';
 import { ReviewCardView } from '@/components/ReviewCardView';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { useProfile, useProfileStats, useToggleFollow, useUserReviews } from '@/features/social/queries';
@@ -148,7 +149,7 @@ export function ProfileView({ username }: { username: string }) {
       renderItem={({ item }) => <ReviewCardView review={item} showAuthor={false} showMedia />}
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.mustard} />}
+      refreshControl={<PullRefresh refreshing={refreshing} onRefresh={refresh} />}
       onEndReachedThreshold={0.5}
       onEndReached={() => {
         if (reviews.hasNextPage && !reviews.isFetchingNextPage) void reviews.fetchNextPage();

@@ -1,12 +1,22 @@
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MediaCover } from '@/components/MediaCover';
+import { PullRefresh } from '@/components/PullRefresh';
+import { useRefresh } from '@/lib/useRefresh';
 import { colors, fonts, spacing, type } from '@/theme';
 
-export function DetailLayout({ children }: { children: React.ReactNode }) {
+type LayoutProps = { children: React.ReactNode; onRefresh?: () => Promise<unknown> };
+
+export function DetailLayout({ children, onRefresh }: LayoutProps) {
   const insets = useSafeAreaInsets();
+  const refresh = useRefresh(onRefresh ?? (() => Promise.resolve()));
   return (
     <ScrollView
+      refreshControl={
+        onRefresh ? (
+          <PullRefresh refreshing={refresh.refreshing} onRefresh={() => void refresh.onRefresh()} />
+        ) : undefined
+      }
       style={styles.scroll}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
       showsVerticalScrollIndicator={false}

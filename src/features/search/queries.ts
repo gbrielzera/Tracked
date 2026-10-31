@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/services/supabase/client';
 
 export type UserResult = {
@@ -12,6 +12,7 @@ export function useUserSearch(submittedQuery: string) {
   return useQuery({
     queryKey: ['search', 'users', submittedQuery],
     enabled: submittedQuery.length >= 2,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<UserResult[]> => {
       const { data, error } = await supabase.rpc('search_users', { p_query: submittedQuery, p_limit: 30 });

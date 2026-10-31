@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MediaRow, RankNumber } from '@/components/MediaRow';
+import { PullRefresh } from '@/components/PullRefresh';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { useChart } from '@/features/music/queries';
@@ -126,11 +127,7 @@ export default function TrendingScreen() {
           keyExtractor={(row) => row.key}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl
-              refreshing={query.isRefetching}
-              onRefresh={() => void query.refetch()}
-              tintColor={colors.mustard}
-            />
+            <PullRefresh refreshing={query.isRefetching} onRefresh={() => void query.refetch()} />
           }
           renderItem={({ item }) => (
             <MediaRow

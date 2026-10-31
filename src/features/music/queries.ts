@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { musicProvider, searchMedia } from '@/services/music';
 import type { ArtistRef, MediaKind } from '@/services/music';
 
@@ -35,11 +35,14 @@ export function useArtistAlbums(artist: ArtistRef | undefined) {
   });
 }
 
-// A busca só roda depois que o usuário envia (Enter/botão), para poupar a cota do Deezer.
+// Quem chama já espera o usuário parar de digitar (debounce) antes de passar o texto,
+// para poupar a cota do Deezer. Texto curto (ou vazio) desliga a busca.
+// Mantém o resultado anterior na tela enquanto o novo carrega, sem piscar a cada pausa.
 export function useSearch(kind: MediaKind, submittedQuery: string) {
   return useInfiniteQuery({
     queryKey: ['search', kind, submittedQuery],
     enabled: submittedQuery.length >= 2,
+    placeholderData: keepPreviousData,
     initialPageParam: 0,
     queryFn: ({ pageParam }) => searchMedia(kind, submittedQuery, { index: pageParam }),
     getNextPageParam: (last) => last.nextIndex ?? undefined,
