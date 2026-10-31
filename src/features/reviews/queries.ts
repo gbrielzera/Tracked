@@ -71,6 +71,8 @@ export function useMediaItemRow(kind: MediaKind, externalId: string) {
   });
 }
 
+export type MyReview = { id: string; rating: number; body: string | null };
+
 export function useMyReview(mediaItemId: string | undefined) {
   const userId = useAuth((s) => s.session?.user.id);
   return useQuery({
@@ -135,6 +137,7 @@ function useInvalidateReviewData() {
 
 export function useSaveReview(item: MediaItem) {
   const userId = useAuth((s) => s.session?.user.id);
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateReviewData();
 
   return useMutation({
@@ -150,8 +153,17 @@ export function useSaveReview(item: MediaItem) {
         { onConflict: 'user_id,media_item_id' },
       );
       if (error) throw error;
+      return mediaItemId;
     },
-    onSuccess: invalidate,
+    onSuccess: (mediaItemId, { rating, body }) => {
+      // Mostra já o resumo da review salva; o id real chega na atualização logo em seguida.
+      queryClient.setQueryData<MyReview | null>(['review', 'mine', mediaItemId, userId], (old) => ({
+        id: old?.id ?? '',
+        rating,
+        body: body.trim() || null,
+      }));
+      invalidate();
+    },
   });
 }
 

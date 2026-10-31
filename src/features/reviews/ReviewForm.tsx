@@ -1,14 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Button } from '@/components/Button';
 import { StarRating } from '@/components/StarRating';
 import { containsProfanity, PROFANITY_MESSAGE } from '@/lib/profanity';
 import type { MediaItem } from '@/services/music';
 import { useAuth } from '@/stores/auth';
 import { colors, fonts, radius, spacing, type } from '@/theme';
-import { useDeleteReview, useSaveReview } from './queries';
+import { useSaveReview } from './queries';
 
 type Existing = { id: string; rating: number; body: string | null } | null;
+
+type Props = {
+  item: MediaItem;
+  existing: Existing;
+  // Chamado depois de salvar, com a mensagem de confirmação.
+  onSaved: (message: string) => void;
+  // Só existe ao editar uma review já publicada.
+  onCancel?: () => void;
+};
 
 const PLACEHOLDERS = {
   track: 'O que você achou dessa música?',
@@ -16,30 +25,20 @@ const PLACEHOLDERS = {
   artist: 'O que você acha desse artista?',
 } as const;
 
-export function ReviewForm({ item, existing }: { item: MediaItem; existing: Existing }) {
+// Escrever ou editar a review. Cada pessoa tem uma review por item: publicada, ela vira um
+// resumo (MyReviewSummary) e este formulário só volta quando você toca em "Editar".
+export function ReviewForm({ item, existing, onSaved, onCancel }: Props) {
   const privateReviews = useAuth((s) => s.profile?.reviews_private ?? false);
   const [rating, setRating] = useState(existing?.rating ?? 0);
   const [body, setBody] = useState(existing?.body ?? '');
-  const [notice, setNotice] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const save = useSaveReview(item);
-  const remove = useDeleteReview();
 
-  // Quando a review salva chega do servidor, o formulário passa a refletir esse valor.
   useEffect(() => {
     setRating(existing?.rating ?? 0);
     setBody(existing?.body ?? '');
   }, [existing?.id, existing?.rating, existing?.body]);
-
-  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
-
-  const flash = (message: string) => {
-    setNotice(message);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setNotice(null), 3000);
-  };
 
   const unchanged = !!existing && existing.rating === rating && (existing.body ?? '') === body.trim();
   const canSave = rating > 0 && !unchanged && !save.isPending;
@@ -49,22 +48,11 @@ export function ReviewForm({ item, existing }: { item: MediaItem; existing: Exis
       setBlocked(true);
       return;
     }
-    save.mutate({ rating, body }, { onSuccess: () => flash(existing ? 'Review atualizada.' : 'Review publicada.') });
+    save.mutate(
+      { rating, body },
+      { onSuccess: () => onSaved(existing ? 'Review atualizada.' : 'Review publicada.') },
+    );
   };
-
-  const onDelete = () => {
-    if (!existing) return;
-    Alert.alert('Excluir review', 'A nota e o texto serão apagados. Isso não pode ser desfeito.', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: () => remove.mutate(existing.id, { onSuccess: () => flash('Review excluída.') }),
-      },
-    ]);
-  };
-
-  const failed = save.isError || remove.isError;
 
   return (
     <View style={styles.form}>
@@ -94,14 +82,9 @@ export function ReviewForm({ item, existing }: { item: MediaItem; existing: Exis
           {PROFANITY_MESSAGE}
         </Text>
       ) : null}
-      {failed ? (
+      {save.isError ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">
           Não foi possível salvar. Verifique sua conexão e tente de novo.
-        </Text>
-      ) : null}
-      {notice ? (
-        <Text style={styles.notice} accessibilityLiveRegion="polite">
-          {notice}
         </Text>
       ) : null}
 
@@ -111,7 +94,7 @@ export function ReviewForm({ item, existing }: { item: MediaItem; existing: Exis
         loading={save.isPending}
         disabled={!canSave}
       />
-      {existing ? <Button label="Excluir review" variant="ghost" onPress={onDelete} loading={remove.isPending} /> : null}
+      {onCancel ? <Button label="Cancelar" variant="ghost" onPress={onCancel} /> : null}
     </View>
   );
 }
@@ -133,5 +116,4 @@ const styles = StyleSheet.create({
   counter: { ...type.small, color: colors.fog, textAlign: 'right' },
   hint: { ...type.small, color: colors.fog },
   error: { ...type.small, color: colors.danger },
-  notice: { ...type.small, color: colors.teal },
 });
