@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 0, flexShrink: 0 },
   row: { gap: 8, paddingHorizontal: 16, paddingVertical: 4 },
   pill: {
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 16,
     borderRadius: radius.button,
     justifyContent: 'center',

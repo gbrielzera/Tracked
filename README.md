@@ -89,6 +89,26 @@ desconhecidas).
 > rode `npx eas-cli init` antes: ele cria um projeto novo e troca o `projectId` e o `owner` no
 > `app.json`.
 
+### APK de demonstração (funciona sem o computador)
+
+O APK de desenvolvimento só abre o app se o `npx expo start` estiver rodando. Para a apresentação,
+gere o APK **independente**, que já leva o código dentro:
+
+```bash
+npx eas-cli env:push preview --path .env
+npx eas-cli build --profile preview --platform android
+```
+
+Instale pelo link do build, como no passo anterior. Dois cuidados:
+
+- Ele usa o **mesmo pacote** do app de desenvolvimento, então **substitui** o que está instalado
+  (os dados da conta ficam no Supabase, não se perdem). Para voltar ao modo desenvolvimento, instale
+  o APK de desenvolvimento de novo.
+- O push e o login com Google funcionam igual, pois dependem da mesma conta Firebase e do mesmo
+  endereço `tracked://`.
+
+O roteiro de apresentação está em [`docs/roteiro-demo.md`](docs/roteiro-demo.md).
+
 Para testar sem gerar o APK, tente o Expo Go com `npx expo start --go`. **Não foi testado**, e o
 login com Google e o link do e-mail provavelmente não voltam para o app por esse caminho.
 
@@ -105,7 +125,8 @@ dá para tentar o Expo Go.
 | `npm run typecheck` | Confere os tipos do TypeScript |
 | `npm run test:db` | Roda os testes do banco (regras de acesso, feed, limites, rankings) num Postgres local em memória, sem Docker nem Supabase |
 | `npm run test:functions` | Testa a lógica das mensagens de push (precisa de Node 22.18 ou mais novo) |
-| `npm test` | Roda os dois conjuntos de testes |
+| `npm run test:app` | Testa a lógica do app sem rede: formatação, validação, filtro de palavrões, países, histórico de busca e o provedor do Deezer (com um cliente falso) |
+| `npm test` | Roda os três conjuntos de testes |
 | `npx expo export --platform android` | Testa se o app compila, sem precisar de celular |
 
 ## Estrutura do projeto
@@ -158,7 +179,9 @@ npx supabase gen types typescript --linked > src/services/supabase/database.type
 No painel do Supabase, configure:
 
 1. **Authentication > Sign In / Providers > User Signups**: ative **Allow manual linking** e
-   **Allow anonymous sign-ins**. Desative **Confirm email** só durante o desenvolvimento.
+   **Allow anonymous sign-ins**. **Confirm email** está **desligado de propósito** até a apresentação
+   do trabalho, para cadastrar contas de teste sem depender de e-mail. **Antes de publicar o app de
+   verdade, ligue de novo** (ver "Antes de publicar" no fim).
 2. **Authentication > URL Configuration > Redirect URLs**: adicione `tracked://**` e `exp://**`.
 3. **Sign In / Providers > Google**: crie um cliente OAuth do tipo **Aplicativo da Web** no
    [Google Cloud](https://console.cloud.google.com), com o redirect
@@ -229,6 +252,19 @@ Ao entrar numa conta, o app pede permissão para notificações e registra o apa
 contas: uma segue ou curte a review da outra, e a segunda recebe o aviso. Push **não funciona em
 emulador**, e no iPhone exige conta paga da Apple (US$ 99 por ano).
 
+
+## Antes de publicar
+
+Estas escolhas valem para a fase acadêmica. Se o app virar um produto de verdade:
+
+- **Ligue `Confirm email`** no Supabase (Authentication > Sign In / Providers > Email). Hoje qualquer
+  pessoa cria conta com um e-mail que não é dela.
+- **Tire o Google Cloud do modo de teste** (ele limita o login a e-mails cadastrados) e revise a
+  tela de consentimento.
+- **Troque a fonte das descrições**: a chave do Last.fm é só para uso não comercial.
+- **Conta Apple paga** para distribuir no iPhone (US$ 99 por ano); sem ela só dá para tentar o Expo Go.
+- **Excluir conta** já funciona no app (Editar perfil > Excluir conta) e remove avatar, reviews,
+  comentários e curtidas, como as lojas exigem.
 
 ## Problemas comuns
 

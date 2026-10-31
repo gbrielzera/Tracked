@@ -97,7 +97,13 @@ export function ReviewCardView({ review, showAuthor = true, showMedia = false, o
         </Pressable>
       ) : null}
 
-      <Pressable onPress={openDetail} disabled={!openable} style={styles.content}>
+      <Pressable
+        onPress={openDetail}
+        disabled={!openable}
+        accessibilityRole={openable ? 'button' : undefined}
+        accessibilityHint={openable ? 'Abre a review completa' : undefined}
+        style={styles.content}
+      >
         <StarRating value={review.rating} size={18} />
         {review.body ? <Text style={styles.body}>{review.body}</Text> : null}
       </Pressable>

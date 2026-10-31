@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginLeft: 16,
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 14,
     borderRadius: radius.button,
     backgroundColor: colors.sleeve,

@@ -301,5 +301,5 @@ const styles = StyleSheet.create({
   historyRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 8 },
   historyMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
   historyText: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: colors.paper },
-  historyRemove: { width: 40, height: 48, alignItems: 'center', justifyContent: 'center' },
+  historyRemove: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
 });

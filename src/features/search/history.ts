@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { pushHistory } from './historyList';
 
 // Histórico fica no aparelho (não na conta). Usa o SecureStore, que já vem no app:
 // um armazenamento novo exigiria gerar outro APK.
 const KEY = 'tracked.search-history';
-const MAX_ITEMS = 10;
 
 async function read(): Promise<string[]> {
   try {
@@ -22,13 +22,6 @@ async function write(items: string[]) {
   } catch {
     // histórico é um conforto: se não salvar, a busca segue funcionando
   }
-}
-
-// Mais recente primeiro, sem repetir (ignora maiúsculas/minúsculas).
-export function pushHistory(items: string[], term: string): string[] {
-  const value = term.trim();
-  if (value.length < 2) return items;
-  return [value, ...items.filter((item) => item.toLowerCase() !== value.toLowerCase())].slice(0, MAX_ITEMS);
 }
 
 export function useSearchHistory() {

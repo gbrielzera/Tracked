@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,6 +46,32 @@ export default function EditProfileScreen() {
     await unregisterPush();
     await supabase.auth.signOut();
   };
+
+  // Apaga a conta de verdade (avatar, reviews, comentários, curtidas): a função do servidor
+  // identifica a pessoa pelo login, então só dá para excluir a própria conta.
+  const [deleting, setDeleting] = useState(false);
+  const deleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await unregisterPush();
+      const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+      if (error) throw error;
+      queryClient.clear();
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      setDeleting(false);
+      Alert.alert('Não foi possível excluir', 'Sua conta continua ativa. Verifique a conexão e tente de novo.');
+    }
+  };
+  const confirmDelete = () =>
+    Alert.alert(
+      'Excluir conta?',
+      'Seu perfil, suas reviews, comentários e curtidas serão apagados para sempre. Não dá para desfazer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir conta', style: 'destructive', onPress: () => void deleteAccount() },
+      ],
+    );
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -176,7 +202,8 @@ export default function EditProfileScreen() {
           icon="star-outline"
           onPress={() => router.push('/settings/favorites')}
         />
-        <Button label="Sair da conta" variant="ghost" onPress={() => void signOut()} />
+        <Button label="Sair da conta" variant="ghost" onPress={() => void signOut()} disabled={deleting} />
+        <Button label="Excluir conta" variant="danger" loading={deleting} onPress={confirmDelete} />
       </View>
     </Screen>
   );

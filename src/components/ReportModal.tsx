@@ -15,7 +15,7 @@ type Props = {
 export function ReportModal({ visible, title, busy, onClose, onSelect }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Fechar" />
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel="Fechar" />
       <View style={styles.sheet}>
         <Text style={styles.title}>{title}</Text>
         {busy ? (

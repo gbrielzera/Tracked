@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import { MediaCover } from '@/components/MediaCover';
 import { MediaRow } from '@/components/MediaRow';
 import { Screen } from '@/components/Screen';
+import { ErrorState } from '@/components/states';
 import {
   FavoriteEntry,
   MAX_FAVORITES,
@@ -97,6 +98,17 @@ export default function FavoritesScreen() {
     .filter((item): item is Artist => item.kind === 'artist')
     .slice(0, 10);
   const suggested = (suggestions.data ?? []).filter((s) => !has(s.externalId));
+
+  // Sem carregar a lista salva, não dá para editar: salvar uma lista vazia apagaria os favoritos.
+  if (saved.isError) {
+    return (
+      <ErrorState
+        error={saved.error}
+        message="Não foi possível carregar seus favoritos."
+        onRetry={() => void saved.refetch()}
+      />
+    );
+  }
 
   if (saved.isPending) {
     return (

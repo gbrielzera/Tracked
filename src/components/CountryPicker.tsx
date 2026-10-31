@@ -45,7 +45,7 @@ export function CountryPicker({ visible, title, countries, selected, noneLabel, 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <KeyboardAvoidingView style={styles.root} behavior="padding">
-        <Pressable style={styles.backdrop} onPress={close} accessibilityLabel="Fechar" />
+        <Pressable style={styles.backdrop} onPress={close} accessibilityRole="button" accessibilityLabel="Fechar" />
         <View style={styles.sheet}>
           <Text style={styles.title} accessibilityRole="header">
             {title}

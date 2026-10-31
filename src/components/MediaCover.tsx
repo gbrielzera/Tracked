@@ -8,10 +8,11 @@ type Props = { uri?: string | null; size: number; round?: boolean };
 export function MediaCover({ uri, size, round = false }: Props) {
   const box = { width: size, height: size, borderRadius: round ? size / 2 : Math.max(6, size * 0.08) };
   if (uri) {
-    return <Image source={{ uri }} style={[styles.image, box]} contentFit="cover" transition={150} />;
+    // Capa é decorativa: o título e o artista ao lado já dizem o que é.
+    return <Image source={{ uri }} style={[styles.image, box]} contentFit="cover" transition={150} accessible={false} />;
   }
   return (
-    <View style={[styles.fallback, box]}>
+    <View style={[styles.fallback, box]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Ionicons name={round ? 'person' : 'musical-notes'} size={size * 0.4} color={colors.fog} />
     </View>
   );

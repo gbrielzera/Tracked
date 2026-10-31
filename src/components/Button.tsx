@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts, radius } from '@/theme';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 type Props = {
   label: string;
@@ -15,7 +15,8 @@ type Props = {
 
 export function Button({ label, onPress, variant = 'primary', loading, disabled, icon }: Props) {
   const inactive = disabled || loading;
-  const textColor = variant === 'primary' ? colors.ink : variant === 'ghost' ? colors.teal : colors.paper;
+  const textColor =
+    variant === 'primary' ? colors.ink : variant === 'ghost' ? colors.teal : variant === 'danger' ? colors.danger : colors.paper;
 
   return (
     <Pressable
@@ -28,6 +29,7 @@ export function Button({ label, onPress, variant = 'primary', loading, disabled,
         variant === 'primary' && styles.primary,
         variant === 'secondary' && styles.secondary,
         variant === 'ghost' && styles.ghost,
+        variant === 'danger' && styles.danger,
         inactive && styles.inactive,
         pressed && styles.pressed,
       ]}
@@ -57,6 +59,7 @@ const styles = StyleSheet.create({
   primary: { backgroundColor: colors.mustard },
   secondary: { borderWidth: 1.5, borderColor: colors.groove },
   ghost: { minHeight: 44 },
+  danger: { borderWidth: 1.5, borderColor: colors.danger },
   inactive: { opacity: 0.5 },
   pressed: { opacity: 0.8 },
   label: { fontFamily: fonts.bold, fontSize: 16 },
