@@ -14,6 +14,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
       contentContainerStyle={styles.row}
       accessibilityRole="tablist"
     >
@@ -36,6 +37,8 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
 }
 
 const styles = StyleSheet.create({
+  // Altura fixa pelo conteúdo: sem isso a faixa encolhe e a lista abaixo cobre os filtros.
+  scroll: { flexGrow: 0, flexShrink: 0 },
   row: { gap: 8, paddingHorizontal: 16, paddingVertical: 4 },
   pill: {
     minHeight: 40,
