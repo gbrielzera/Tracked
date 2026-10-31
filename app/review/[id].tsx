@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
@@ -25,6 +25,16 @@ export default function ReviewScreen() {
   const removeComment = useDeleteComment(id);
   const report = useReport();
   const [target, setTarget] = useState<ReportTarget | null>(null);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+
+  // O campo de comentário fica no fim da lista: ao abrir o teclado, leva a tela até ele.
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50),
+    );
+    return () => show.remove();
+  }, []);
 
   if (review.isPending) return <LoadingState />;
   if (review.isError) {
@@ -62,8 +72,9 @@ export default function ReviewScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.flex} behavior="padding">
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
         keyboardShouldPersistTaps="handled"

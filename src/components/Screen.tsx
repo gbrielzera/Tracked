@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, Platform, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Edge, SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@/theme';
 
@@ -12,7 +12,7 @@ type Props = {
 export function Screen({ children, scroll = true, edges = ['top', 'bottom'], style }: Props) {
   return (
     <SafeAreaView style={styles.root} edges={edges}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         {scroll ? (
           <ScrollView
             keyboardShouldPersistTaps="handled"
