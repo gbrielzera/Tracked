@@ -121,6 +121,13 @@ export default function TrendingScreen() {
           title="Ainda não há avaliações suficientes"
           body="Um item entra neste ranking com pelo menos 2 avaliações. Avalie músicas para montar a lista."
         />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          title="Nada por aqui"
+          body="A lista veio vazia. Puxe para baixo ou toque abaixo para tentar de novo."
+          actionLabel="Tentar de novo"
+          onAction={() => void query.refetch()}
+        />
       ) : (
         <FlatList
           data={rows}
