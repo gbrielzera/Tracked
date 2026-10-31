@@ -1,7 +1,7 @@
 # Roteiro de apresentação do Tracked
 
 Duração prevista: **8 a 10 minutos**. Tudo roda num celular Android com o APK de demonstração
-(perfil `preview`, ver o README). Não precisa de computador na hora.
+(perfil `preview`, ver [como-rodar.md](como-rodar.md#apk-de-demonstração-funciona-sem-o-computador)). Não precisa de computador na hora.
 
 ## Na semana anterior
 
