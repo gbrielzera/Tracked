@@ -26,7 +26,11 @@ Deno.serve(async (req) => {
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-  const { data: tokenRows } = await admin.from('push_tokens').select('token').eq('user_id', record.recipient_id);
+  const { data: tokenRows, error: tokenError } = await admin
+    .from('push_tokens')
+    .select('token')
+    .eq('user_id', record.recipient_id);
+  if (tokenError) return json({ sent: 0, error: 'tokens_unavailable', detail: tokenError.message });
   const tokens = (tokenRows ?? []).map((row) => row.token).filter(isExpoToken);
   if (tokens.length === 0) return json({ sent: 0 });
 

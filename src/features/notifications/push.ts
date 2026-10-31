@@ -88,7 +88,11 @@ export function usePushNotifications() {
   const registeredFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (status !== 'ready' || !userId) return;
+    if (status !== 'ready' || !userId) {
+      // Saiu da conta: ao voltar (mesmo na mesma conta) o aparelho precisa se registrar de novo.
+      registeredFor.current = null;
+      return;
+    }
     if (registeredFor.current !== userId) {
       registeredFor.current = userId;
       void registerForPush();

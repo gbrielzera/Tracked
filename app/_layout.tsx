@@ -48,6 +48,13 @@ const detailOptions = {
 const titledOptions = (title: string) =>
   ({ ...detailOptions, title, headerTitleStyle: { fontFamily: fonts.bold, fontSize: 18 } }) as const;
 
+// Precisa ficar dentro do QueryClientProvider: estes hooks usam o cache de queries.
+function SessionEffects() {
+  useNotificationsRealtime();
+  usePushNotifications();
+  return null;
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     BricolageGrotesque_400Regular,
@@ -57,8 +64,6 @@ export default function RootLayout() {
     BricolageGrotesque_800ExtraBold,
   });
   useAuthBootstrap();
-  useNotificationsRealtime();
-  usePushNotifications();
   const status = useAuthStatus();
 
   const ready = (fontsLoaded || !!fontError) && status !== 'loading';
@@ -69,6 +74,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navigationTheme}>
       <QueryClientProvider client={queryClient}>
+      <SessionEffects />
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="index" />
