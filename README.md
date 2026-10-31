@@ -103,6 +103,7 @@ dá para tentar o Expo Go.
 | `npx expo start --dev-client` | Inicia abrindo no app de desenvolvimento |
 | `npx expo start -c` | Inicia limpando o cache (resolve erros estranhos de build) |
 | `npm run typecheck` | Confere os tipos do TypeScript |
+| `npm run test:db` | Roda 93 testes do banco (regras de acesso, feed, limites, rankings) num Postgres local em memória, sem Docker nem Supabase |
 | `npx expo export --platform android` | Testa se o app compila, sem precisar de celular |
 
 ## Estrutura do projeto

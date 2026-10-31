@@ -1,0 +1,161 @@
+import { useState } from 'react';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Avatar } from '@/components/Avatar';
+import { Button } from '@/components/Button';
+import { Screen } from '@/components/Screen';
+import { ControlledField } from '@/components/TextField';
+import { refreshProfile } from '@/features/auth/bootstrap';
+import { uploadAvatar } from '@/features/profile/avatar';
+import { EditProfileValues, editProfileSchema } from '@/lib/validation';
+import { supabase } from '@/services/supabase/client';
+import { useAuth } from '@/stores/auth';
+import { colors, fonts, radius, spacing, type } from '@/theme';
+
+export default function EditProfileScreen() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const session = useAuth((s) => s.session);
+  const profile = useAuth((s) => s.profile);
+
+  const [localUri, setLocalUri] = useState<string | null>(null);
+  const [reviewsPrivate, setReviewsPrivate] = useState(profile?.reviews_private ?? false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<EditProfileValues>({
+    resolver: zodResolver(editProfileSchema),
+    defaultValues: { displayName: profile?.display_name ?? '', bio: profile?.bio ?? '' },
+  });
+
+  const pickPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) setLocalUri(result.assets[0].uri);
+  };
+
+  const onSubmit = handleSubmit(async ({ displayName, bio }) => {
+    if (!session) return;
+    setFormError(null);
+    try {
+      let avatarUrl = profile?.avatar_url ?? null;
+      if (localUri) avatarUrl = await uploadAvatar(session.user.id, localUri);
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: displayName,
+          bio: bio.trim() || null,
+          reviews_private: reviewsPrivate,
+          avatar_url: avatarUrl,
+        })
+        .eq('id', session.user.id);
+      if (error) throw error;
+
+      await refreshProfile();
+      // A privacidade e os dados do perfil aparecem em várias telas.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-stats'] }),
+        queryClient.invalidateQueries({ queryKey: ['reviews'] }),
+      ]);
+      router.back();
+    } catch {
+      setFormError('Não foi possível salvar. Verifique sua conexão e tente de novo.');
+    }
+  });
+
+  return (
+    <Screen edges={['bottom']}>
+      <Pressable
+        onPress={pickPhoto}
+        style={styles.photo}
+        accessibilityRole="button"
+        accessibilityLabel="Trocar foto de perfil"
+      >
+        <Avatar uri={localUri ?? profile?.avatar_url} name={profile?.display_name} size={88} />
+        <View style={styles.photoText}>
+          <Text style={styles.photoLabel}>Trocar foto</Text>
+          <Text style={styles.handle}>@{profile?.username}</Text>
+        </View>
+      </Pressable>
+
+      <View style={styles.form}>
+        <ControlledField control={control} name="displayName" label="Nome exibido" autoComplete="name" />
+        <ControlledField
+          control={control}
+          name="bio"
+          label="Bio"
+          hint="Até 160 caracteres."
+          multiline
+          maxLength={160}
+        />
+
+        <View style={styles.switchRow}>
+          <View style={styles.switchText}>
+            <Text style={styles.switchLabel}>Reviews privadas</Text>
+            <Text style={styles.switchHint}>
+              Ligado, só você vê suas reviews: no perfil, no feed de quem te segue e nas páginas das músicas.
+            </Text>
+          </View>
+          <Switch
+            value={reviewsPrivate}
+            onValueChange={setReviewsPrivate}
+            trackColor={{ false: colors.groove, true: colors.mustard }}
+            thumbColor={colors.paper}
+            accessibilityLabel="Reviews privadas"
+          />
+        </View>
+
+        {formError ? (
+          <Text style={styles.error} accessibilityLiveRegion="polite">
+            {formError}
+          </Text>
+        ) : null}
+        <Button label="Salvar" loading={isSubmitting} onPress={onSubmit} />
+      </View>
+
+      <View style={styles.more}>
+        <Button
+          label="Editar artistas favoritos"
+          variant="secondary"
+          icon="star-outline"
+          onPress={() => router.push('/settings/favorites')}
+        />
+        <Button label="Sair da conta" variant="ghost" onPress={() => void supabase.auth.signOut()} />
+      </View>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  photo: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  photoText: { gap: 2 },
+  photoLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.teal },
+  handle: { ...type.body, color: colors.fog },
+  form: { gap: spacing.md, marginTop: spacing.sm },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.field,
+    backgroundColor: colors.sleeve,
+  },
+  switchText: { flex: 1, gap: 4 },
+  switchLabel: { fontFamily: fonts.semibold, fontSize: 16, color: colors.paper },
+  switchHint: { ...type.small, color: colors.fog },
+  error: { ...type.small, color: colors.danger },
+  more: { gap: spacing.sm, marginTop: spacing.lg },
+});

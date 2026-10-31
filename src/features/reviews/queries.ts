@@ -17,13 +17,19 @@ export type ReviewCard = {
   authorUsername: string | null;
   authorDisplayName: string;
   authorAvatarUrl: string | null;
+  mediaItemId: string;
+  mediaKind: MediaKind;
+  mediaExternalId: string;
+  mediaTitle: string;
+  mediaArtistName: string | null;
+  mediaCoverUrl: string | null;
   likesCount: number;
   commentsCount: number;
   likedByMe: boolean;
 };
 
 // Linha do banco (campos anuláveis no tipo gerado) -> modelo do app.
-function toReviewCard(row: Record<string, any>): ReviewCard {
+export function toReviewCard(row: Record<string, any>): ReviewCard {
   return {
     id: row.id,
     createdAt: row.created_at,
@@ -34,6 +40,12 @@ function toReviewCard(row: Record<string, any>): ReviewCard {
     authorUsername: row.author_username,
     authorDisplayName: row.author_display_name ?? 'Usuário',
     authorAvatarUrl: row.author_avatar_url,
+    mediaItemId: row.media_item_id,
+    mediaKind: row.media_kind,
+    mediaExternalId: row.media_external_id,
+    mediaTitle: row.media_title,
+    mediaArtistName: row.media_artist_name,
+    mediaCoverUrl: row.media_cover_url,
     likesCount: Number(row.likes_count ?? 0),
     commentsCount: Number(row.comments_count ?? 0),
     likedByMe: !!row.liked_by_me,
@@ -77,7 +89,29 @@ export function useMyReview(mediaItemId: string | undefined) {
   });
 }
 
-type Cursor = { ts: string; id: string } | null;
+export type Cursor = { ts: string; id: string } | null;
+
+type ReviewFilter = { userId?: string; mediaItemId?: string; followingOnly?: boolean };
+
+// Uma página de reviews (feed, perfil ou item). Paginação por (created_at, id).
+export async function fetchReviewPage(filter: ReviewFilter, cursor: Cursor): Promise<ReviewCard[]> {
+  const { data, error } = await supabase.rpc('list_reviews', {
+    p_user_id: filter.userId,
+    p_media_item_id: filter.mediaItemId,
+    p_following_only: filter.followingOnly,
+    p_cursor_ts: cursor?.ts,
+    p_cursor_id: cursor?.id,
+    p_limit: REVIEWS_PAGE_SIZE,
+  });
+  if (error) throw error;
+  return (data ?? []).map(toReviewCard);
+}
+
+export function nextReviewCursor(last: ReviewCard[]): Cursor | undefined {
+  if (last.length < REVIEWS_PAGE_SIZE) return undefined;
+  const tail = last[last.length - 1];
+  return { ts: tail.createdAt, id: tail.id };
+}
 
 // Reviews públicas do item (a RLS já esconde as de perfis privados). Paginação por (created_at, id).
 export function useItemReviews(mediaItemId: string | undefined) {
@@ -85,28 +119,15 @@ export function useItemReviews(mediaItemId: string | undefined) {
     queryKey: ['reviews', 'item', mediaItemId],
     enabled: !!mediaItemId,
     initialPageParam: null as Cursor,
-    queryFn: async ({ pageParam }) => {
-      const { data, error } = await supabase.rpc('list_reviews', {
-        p_media_item_id: mediaItemId!,
-        p_cursor_ts: pageParam?.ts,
-        p_cursor_id: pageParam?.id,
-        p_limit: REVIEWS_PAGE_SIZE,
-      });
-      if (error) throw error;
-      return (data ?? []).map(toReviewCard);
-    },
-    getNextPageParam: (last): Cursor | undefined => {
-      if (last.length < REVIEWS_PAGE_SIZE) return undefined;
-      const tail = last[last.length - 1];
-      return { ts: tail.createdAt, id: tail.id };
-    },
+    queryFn: ({ pageParam }) => fetchReviewPage({ mediaItemId: mediaItemId! }, pageParam),
+    getNextPageParam: nextReviewCursor,
   });
 }
 
 function useInvalidateReviewData() {
   const queryClient = useQueryClient();
   return () => {
-    for (const key of ['media-item', 'review', 'reviews', 'feed', 'rankings']) {
+    for (const key of ['media-item', 'review', 'reviews', 'rankings']) {
       void queryClient.invalidateQueries({ queryKey: [key] });
     }
   };

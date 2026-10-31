@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Button } from '@/components/Button';
 import { StarRating } from '@/components/StarRating';
+import { containsProfanity, PROFANITY_MESSAGE } from '@/lib/profanity';
 import type { MediaItem } from '@/services/music';
 import { useAuth } from '@/stores/auth';
 import { colors, fonts, radius, spacing, type } from '@/theme';
@@ -20,6 +21,7 @@ export function ReviewForm({ item, existing }: { item: MediaItem; existing: Exis
   const [rating, setRating] = useState(existing?.rating ?? 0);
   const [body, setBody] = useState(existing?.body ?? '');
   const [notice, setNotice] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const save = useSaveReview(item);
@@ -42,8 +44,13 @@ export function ReviewForm({ item, existing }: { item: MediaItem; existing: Exis
   const unchanged = !!existing && existing.rating === rating && (existing.body ?? '') === body.trim();
   const canSave = rating > 0 && !unchanged && !save.isPending;
 
-  const onSave = () =>
+  const onSave = () => {
+    if (containsProfanity(body)) {
+      setBlocked(true);
+      return;
+    }
     save.mutate({ rating, body }, { onSuccess: () => flash(existing ? 'Review atualizada.' : 'Review publicada.') });
+  };
 
   const onDelete = () => {
     if (!existing) return;
@@ -64,7 +71,10 @@ export function ReviewForm({ item, existing }: { item: MediaItem; existing: Exis
       <StarRating value={rating} onChange={setRating} size={40} showValue />
       <TextInput
         value={body}
-        onChangeText={setBody}
+        onChangeText={(value) => {
+          setBody(value);
+          if (blocked) setBlocked(false);
+        }}
         placeholder={PLACEHOLDERS[item.kind]}
         placeholderTextColor={colors.fog}
         selectionColor={colors.mustard}
@@ -78,6 +88,11 @@ export function ReviewForm({ item, existing }: { item: MediaItem; existing: Exis
 
       {privateReviews ? (
         <Text style={styles.hint}>Suas reviews estão privadas: só você vê esta. Mude isso no perfil.</Text>
+      ) : null}
+      {blocked ? (
+        <Text style={styles.error} accessibilityLiveRegion="polite">
+          {PROFANITY_MESSAGE}
+        </Text>
       ) : null}
       {failed ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">

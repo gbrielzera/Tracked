@@ -42,3 +42,14 @@ export type SignupValues = z.infer<typeof signupSchema>;
 export type ForgotValues = z.infer<typeof forgotSchema>;
 export type ResetValues = z.infer<typeof resetSchema>;
 export type OnboardingValues = z.infer<typeof onboardingSchema>;
+
+export const editProfileSchema = z.object({
+  displayName: z
+    .string()
+    .trim()
+    .min(1, 'Digite o nome que aparece no seu perfil.')
+    .max(50, 'Use no máximo 50 caracteres.'),
+  bio: z.string().max(160, 'Use no máximo 160 caracteres.'),
+});
+
+export type EditProfileValues = z.infer<typeof editProfileSchema>;

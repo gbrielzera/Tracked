@@ -8,6 +8,7 @@ export const colors = {
   mustard: '#F0B429',
   teal: '#5CD6C0',
   danger: '#FF7A7A',
+  like: '#FF6F91',
 
   // aliases semânticos usados pelas telas
   background: '#17121F',

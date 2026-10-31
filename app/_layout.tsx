@@ -14,7 +14,7 @@ import {
 import { useAuthBootstrap } from '@/features/auth/bootstrap';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStatus } from '@/stores/auth';
-import { colors } from '@/theme';
+import { colors, fonts } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +27,10 @@ const detailOptions = {
   headerTintColor: colors.paper,
   headerBackButtonDisplayMode: 'minimal',
 } as const;
+
+// Mesma base, com título visível.
+const titledOptions = (title: string) =>
+  ({ ...detailOptions, title, headerTitleStyle: { fontFamily: fonts.bold, fontSize: 18 } }) as const;
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -60,7 +64,14 @@ export default function RootLayout() {
           <Stack.Screen name="track/[id]" options={detailOptions} />
           <Stack.Screen name="album/[id]" options={detailOptions} />
           <Stack.Screen name="artist/[id]" options={detailOptions} />
-          <Stack.Screen name="user/[username]" options={detailOptions} />
+          <Stack.Screen name="review/[id]" options={titledOptions('Review')} />
+          <Stack.Screen name="user/[username]/index" options={detailOptions} />
+          <Stack.Screen name="user/[username]/followers" options={titledOptions('Seguidores')} />
+          <Stack.Screen name="user/[username]/following" options={titledOptions('Seguindo')} />
+        </Stack.Protected>
+        <Stack.Protected guard={status === 'ready'}>
+          <Stack.Screen name="settings/edit-profile" options={titledOptions('Editar perfil')} />
+          <Stack.Screen name="settings/favorites" options={titledOptions('Artistas favoritos')} />
         </Stack.Protected>
         <Stack.Protected guard={status === 'guest'}>
           <Stack.Screen name="upgrade" options={{ presentation: 'modal' }} />
