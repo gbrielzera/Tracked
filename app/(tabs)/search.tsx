@@ -7,6 +7,7 @@ import { PullRefresh } from '@/components/PullRefresh';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { useSearch } from '@/features/music/queries';
+import { useSearchHistory } from '@/features/search/history';
 import { useUserSearch } from '@/features/search/queries';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { useRefresh } from '@/lib/useRefresh';
@@ -67,6 +68,7 @@ export default function SearchScreen() {
   const [segment, setSegment] = useState<Segment>('all');
   const shown = useDeferredValue(segment);
 
+  const history = useSearchHistory();
   const searched = query.length >= 2;
   const want = (kind: Kind) => (searched && (shown === 'all' || shown === kind) ? query : '');
 
@@ -114,7 +116,54 @@ export default function SearchScreen() {
 
   let body: React.ReactNode;
   if (!searched) {
-    body = <EmptyState title="O que você quer avaliar?" body="Digite pelo menos 2 letras. Os resultados aparecem enquanto você escreve." />;
+    body =
+      history.items.length === 0 ? (
+        <EmptyState title="O que você quer avaliar?" body="Digite pelo menos 2 letras. Os resultados aparecem enquanto você escreve." />
+      ) : (
+        <FlatList
+          data={history.items}
+          keyExtractor={(term) => term}
+          keyboardShouldPersistTaps="handled"
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <Text style={styles.headerTitle} accessibilityRole="header">
+                Buscas recentes
+              </Text>
+              <Pressable onPress={history.clear} hitSlop={10} accessibilityRole="button">
+                <Text style={styles.headerLink}>Limpar tudo</Text>
+              </Pressable>
+            </View>
+          }
+          renderItem={({ item: term }) => (
+            <View style={styles.historyRow}>
+              <Pressable
+                onPress={() => {
+                  setText(term);
+                  setQuery(term);
+                  history.add(term);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Buscar ${term} de novo`}
+                style={styles.historyMain}
+              >
+                <Ionicons name="time-outline" size={20} color={colors.fog} />
+                <Text style={styles.historyText} numberOfLines={1}>
+                  {term}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => history.remove(term)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={`Remover ${term} do histórico`}
+                style={styles.historyRemove}
+              >
+                <Ionicons name="close" size={20} color={colors.fog} />
+              </Pressable>
+            </View>
+          )}
+        />
+      );
   } else if (loading) {
     body = <LoadingState />;
   } else if (allFailed) {
@@ -167,7 +216,10 @@ export default function SearchScreen() {
               subtitle={item.row.subtitle}
               coverUri={item.row.cover}
               round={item.row.round}
-              onPress={() => router.push(item.row.href as never)}
+              onPress={() => {
+                history.add(query);
+                router.push(item.row.href as never);
+              }}
             />
           )
         }
@@ -185,6 +237,7 @@ export default function SearchScreen() {
             onChangeText={setText}
             onSubmitEditing={() => {
               setQuery(text.trim());
+              history.add(text);
               Keyboard.dismiss();
             }}
             placeholder="Músicas, álbuns, artistas ou pessoas"
@@ -245,4 +298,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontFamily: fonts.bold, fontSize: 18, color: colors.paper },
   headerLink: { fontFamily: fonts.bold, fontSize: 14, color: colors.teal },
+  historyRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 8 },
+  historyMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
+  historyText: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: colors.paper },
+  historyRemove: { width: 40, height: 48, alignItems: 'center', justifyContent: 'center' },
 });
