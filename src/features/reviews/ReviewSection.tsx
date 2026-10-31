@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
 import { ReviewCardView } from '@/components/ReviewCardView';
 import type { MediaItem } from '@/services/music';
-import { useAuth, useAuthStatus } from '@/stores/auth';
+import { useAuthStatus } from '@/stores/auth';
 import { colors, radius, spacing, type } from '@/theme';
 import { ReviewForm } from './ReviewForm';
 import { useItemReviews, useMediaItemRow, useMyReview } from './queries';
@@ -13,7 +13,6 @@ import { useItemReviews, useMediaItemRow, useMyReview } from './queries';
 export function ReviewSection({ item }: { item: MediaItem }) {
   const router = useRouter();
   const status = useAuthStatus();
-  const userId = useAuth((s) => s.session?.user.id);
   const isGuest = status === 'guest';
 
   const row = useMediaItemRow(item.kind, item.id);
@@ -26,7 +25,8 @@ export function ReviewSection({ item }: { item: MediaItem }) {
   const loadingForm = (row.isLoading || mine.isLoading) && !formShown.current;
   if (!isGuest && !loadingForm) formShown.current = true;
 
-  const others = (reviews.data?.pages.flat() ?? []).filter((review) => review.authorId !== userId);
+  // Todas as reviews visíveis, inclusive a sua (o formulário acima é só para editar).
+  const items = reviews.data?.pages.flat() ?? [];
 
   return (
     <View style={styles.wrap}>
@@ -50,10 +50,10 @@ export function ReviewSection({ item }: { item: MediaItem }) {
         <Text style={styles.heading}>Reviews</Text>
         {reviews.isError ? (
           <Text style={styles.muted}>Não foi possível carregar as reviews agora.</Text>
-        ) : others.length === 0 && !reviews.isLoading ? (
+        ) : items.length === 0 && !reviews.isLoading ? (
           <Text style={styles.muted}>Ninguém escreveu uma review ainda.</Text>
         ) : (
-          others.map((review) => <ReviewCardView key={review.id} review={review} />)
+          items.map((review) => <ReviewCardView key={review.id} review={review} />)
         )}
         {reviews.hasNextPage ? (
           <Button

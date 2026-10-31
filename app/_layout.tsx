@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -17,6 +17,20 @@ import { useAuthStatus } from '@/stores/auth';
 import { colors, fonts } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
+
+// Sem isso, telas sem fundo próprio (ex.: feed vazio) ficam claras e o texto claro some.
+const navigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: colors.background,
+    card: colors.background,
+    text: colors.paper,
+    border: colors.groove,
+    primary: colors.mustard,
+    notification: colors.mustard,
+  },
+};
 
 // Telas de detalhe: cabeçalho discreto só com o botão de voltar.
 const detailOptions = {
@@ -49,7 +63,8 @@ export default function RootLayout() {
   }, [ready]);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <ThemeProvider value={navigationTheme}>
+      <QueryClientProvider client={queryClient}>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="index" />
@@ -79,6 +94,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="auth/reset-password" />
       </Stack>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

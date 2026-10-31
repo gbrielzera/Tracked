@@ -35,7 +35,14 @@ export function ErrorState({ error, message, onRetry }: ErrorProps) {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'stretch', justifyContent: 'center', gap: spacing.sm, padding: spacing.lg },
+  center: {
+    flex: 1,
+    alignItems: 'stretch',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    padding: spacing.lg,
+    backgroundColor: colors.background,
+  },
   title: { ...type.subtitle, color: colors.paper, textAlign: 'center' },
   body: { ...type.body, color: colors.fog, textAlign: 'center' },
 });
