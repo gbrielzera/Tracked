@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { NotificationBell } from '@/components/NotificationBell';
 import { colors, fonts } from '@/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -16,6 +17,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         sceneStyle: { backgroundColor: colors.background },
+        headerRight: () => <NotificationBell />,
         headerStyle: { backgroundColor: colors.background },
         headerShadowVisible: false,
         headerTintColor: colors.paper,

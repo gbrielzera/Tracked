@@ -28,6 +28,13 @@
         {
           "photosPermission": "O Tracked usa suas fotos para você escolher a foto de perfil."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#F0B429"
+        }
       ]
     ],
     "ios": {

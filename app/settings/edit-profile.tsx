@@ -10,6 +10,7 @@ import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { ControlledField } from '@/components/TextField';
 import { refreshProfile } from '@/features/auth/bootstrap';
+import { unregisterPush } from '@/features/notifications/push';
 import { uploadAvatar } from '@/features/profile/avatar';
 import { EditProfileValues, editProfileSchema } from '@/lib/validation';
 import { supabase } from '@/services/supabase/client';
@@ -34,6 +35,12 @@ export default function EditProfileScreen() {
     resolver: zodResolver(editProfileSchema),
     defaultValues: { displayName: profile?.display_name ?? '', bio: profile?.bio ?? '' },
   });
+
+  // Ao sair, este aparelho deixa de receber os avisos da conta.
+  const signOut = async () => {
+    await unregisterPush();
+    await supabase.auth.signOut();
+  };
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -133,7 +140,7 @@ export default function EditProfileScreen() {
           icon="star-outline"
           onPress={() => router.push('/settings/favorites')}
         />
-        <Button label="Sair da conta" variant="ghost" onPress={() => void supabase.auth.signOut()} />
+        <Button label="Sair da conta" variant="ghost" onPress={() => void signOut()} />
       </View>
     </Screen>
   );

@@ -103,7 +103,9 @@ dá para tentar o Expo Go.
 | `npx expo start --dev-client` | Inicia abrindo no app de desenvolvimento |
 | `npx expo start -c` | Inicia limpando o cache (resolve erros estranhos de build) |
 | `npm run typecheck` | Confere os tipos do TypeScript |
-| `npm run test:db` | Roda 93 testes do banco (regras de acesso, feed, limites, rankings) num Postgres local em memória, sem Docker nem Supabase |
+| `npm run test:db` | Roda os testes do banco (regras de acesso, feed, limites, rankings) num Postgres local em memória, sem Docker nem Supabase |
+| `npm run test:functions` | Testa a lógica das mensagens de push (precisa de Node 22.18 ou mais novo) |
+| `npm test` | Roda os dois conjuntos de testes |
 | `npx expo export --platform android` | Testa se o app compila, sem precisar de celular |
 
 ## Estrutura do projeto
@@ -165,6 +167,68 @@ No painel do Supabase, configure:
 
 O ranking "Mais bem avaliados" é recalculado a cada hora. Para atualizar na hora, rode no
 **SQL Editor** do painel: `select public.refresh_rankings();`
+
+## Notificações push (Android)
+
+As notificações dentro do app (sino, lista e contador) funcionam sozinhas. O **push**, aquele aviso
+que chega com o app fechado, precisa de configuração extra em contas externas. Tudo é gratuito.
+
+**1. Firebase (envio no Android)**
+
+1. Em [console.firebase.google.com](https://console.firebase.google.com), crie um projeto (pode ser
+   ligado ao projeto `Tracked` do Google Cloud).
+2. Adicione um app **Android** com o nome de pacote `com.gbrielzera.tracked`.
+3. Baixe o `google-services.json` e coloque na **raiz** do projeto, ao lado do `package.json`. Esse
+   arquivo é configuração do app e pode ir para o git. Sem ele o app roda normalmente, só que sem
+   push (o `app.config.js` só usa o arquivo quando ele existe).
+4. Em **Configurações do projeto > Contas de serviço**, gere uma **chave privada** (arquivo JSON).
+   Ela é **secreta**: não vai para o git.
+5. Envie essa chave para o Expo, que entrega o push ao Firebase:
+
+```bash
+npx eas-cli credentials
+```
+
+Escolha **Android > development > Google Service Account > Manage your Google Service Account Key
+for Push Notifications (FCM V1)** e envie o arquivo da etapa 4.
+
+**2. Servidor (função e webhook)**
+
+Gere um segredo qualquer, que só o banco e a função conhecem:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
+```
+
+Guarde e publique a função (sem verificação de JWT, porque ela se autentica pelo segredo):
+
+```bash
+npx supabase secrets set WEBHOOK_SECRET=SEGREDO_GERADO
+npx supabase functions deploy send-push --no-verify-jwt
+```
+
+No painel do Supabase, em **Database > Webhooks > Create a new hook**:
+
+| Campo | Valor |
+|---|---|
+| Name | `send-push` |
+| Table | `notifications` |
+| Events | **Insert** |
+| Type | Supabase Edge Functions, função `send-push` |
+| HTTP Headers | adicione `x-webhook-secret` com o **mesmo** segredo gerado acima |
+
+**3. Novo app de desenvolvimento**
+
+O push usa um módulo nativo (`expo-notifications`), então é preciso gerar o APK de novo e instalar:
+
+```bash
+npx eas-cli build --profile development --platform android
+```
+
+Ao entrar numa conta, o app pede permissão para notificações e registra o aparelho. Teste com duas
+contas: uma segue ou curte a review da outra, e a segunda recebe o aviso. Push **não funciona em
+emulador**, e no iPhone exige conta paga da Apple (US$ 99 por ano).
+
 
 ## Problemas comuns
 

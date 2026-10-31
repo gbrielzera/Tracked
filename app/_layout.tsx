@@ -12,6 +12,8 @@ import {
   useFonts,
 } from '@expo-google-fonts/bricolage-grotesque';
 import { useAuthBootstrap } from '@/features/auth/bootstrap';
+import { usePushNotifications } from '@/features/notifications/push';
+import { useNotificationsRealtime } from '@/features/notifications/queries';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStatus } from '@/stores/auth';
 import { colors, fonts } from '@/theme';
@@ -55,6 +57,8 @@ export default function RootLayout() {
     BricolageGrotesque_800ExtraBold,
   });
   useAuthBootstrap();
+  useNotificationsRealtime();
+  usePushNotifications();
   const status = useAuthStatus();
 
   const ready = (fontsLoaded || !!fontError) && status !== 'loading';
@@ -85,6 +89,7 @@ export default function RootLayout() {
           <Stack.Screen name="user/[username]/following" options={titledOptions('Seguindo')} />
         </Stack.Protected>
         <Stack.Protected guard={status === 'ready'}>
+          <Stack.Screen name="notifications" options={titledOptions('Notificações')} />
           <Stack.Screen name="settings/edit-profile" options={titledOptions('Editar perfil')} />
           <Stack.Screen name="settings/favorites" options={titledOptions('Artistas favoritos')} />
         </Stack.Protected>
