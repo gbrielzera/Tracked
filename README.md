@@ -43,7 +43,8 @@ dos visitantes é imposto pelo Postgres.
 O passo a passo completo está em **[docs/como-rodar.md](docs/como-rodar.md)**: requisitos, `.env`,
 instalar o app no celular, APK de demonstração, backend, push e problemas comuns.
 
-Resumo, para quem já tem o app de desenvolvimento instalado no Android:
+Resumo, para quem já tem o app de desenvolvimento instalado no Android (para rodar **sem APK**, só com o
+Expo Go, troque a última linha por `npx expo start --go`; veja o atalho no guia):
 
 ```bash
 git clone https://github.com/gbrielzera/Tracked.git

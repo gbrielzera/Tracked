@@ -9,8 +9,8 @@ o app e como ele é organizado, veja o [README](../README.md).
 |---|---|---|
 | [Node.js](https://nodejs.org) 20 ou mais novo (testado com 24) | Rodar o projeto | `node -v` |
 | [Git](https://git-scm.com) | Baixar o código | `git --version` |
-| Um celular **Android** com o app de desenvolvimento do Tracked instalado | Ver o app rodando | veja a seção 3 |
-| Conta no [Expo](https://expo.dev) | Só para gerar o APK do app de desenvolvimento | |
+| Um celular com o app de desenvolvimento do Tracked (**Android**, seção 3) **ou** o **Expo Go** (Android ou iPhone, atalho da seção 2) | Ver o app rodando | |
+| Conta no [Expo](https://expo.dev) | Só para gerar o APK. **Não precisa** para o Expo Go | |
 
 Não precisa de Docker, Android Studio nem Xcode.
 
@@ -66,7 +66,43 @@ Se a rede bloquear a conexão (Wi-Fi de faculdade, por exemplo), use o túnel:
 npx expo start --dev-client --tunnel
 ```
 
-## 3. Instalar o app no celular
+### Atalho: rodar só com o Expo Go (sem gerar APK)
+
+Se você só quer ver o app funcionando, **não precisa gerar APK nem ter conta no Expo**. Use o
+**Expo Go**, um app gratuito que abre projetos Expo direto do seu computador. Funciona no Android e
+no iPhone.
+
+1. No celular, instale o **Expo Go**: [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+   ou [App Store](https://apps.apple.com/app/expo-go/id982107779).
+2. No computador, faça os passos 1 e 2 acima (`npm install` e o `.env`).
+3. Inicie o servidor **forçando o Expo Go** (sem isso, o Expo tenta abrir o app de desenvolvimento):
+
+```bash
+npx expo start --go
+```
+
+4. Escaneie o QR code: no **Android**, pelo próprio Expo Go ("Scan QR code"); no **iPhone**, pela
+   câmera do aparelho. Celular e computador na **mesma rede Wi-Fi**; se a rede bloquear, use
+   `npx expo start --go --tunnel` (mais lento).
+
+O que muda em relação ao APK:
+
+| Funciona | Não funciona ou não foi testado |
+|---|---|
+| Cadastro e login por **e-mail e senha**, "Continuar como visitante" | **Login com Google**: o retorno usa `tracked://`, que só existe no APK |
+| Pesquisa, Trending, reviews, perfil, seguir, curtir, comentar, excluir conta | **Push**: não chega no Expo Go (o sino dentro do app funciona) |
+| Atualizações do código na hora, ao salvar um arquivo | **Link de confirmação por e-mail** e de redefinir senha: abrem o app só no APK |
+| O app empacota para Android e iOS (checado com `npx expo export`) | Não foi aberto de fato no Expo Go: **nunca testei** esse caminho em aparelho |
+
+Cuidados:
+
+- **Seu computador precisa ficar ligado** com o servidor rodando. Fechou o terminal, o app para de
+  abrir.
+- A versão do Expo Go da loja precisa suportar o **SDK 58** do projeto. Se aparecer "incompatível",
+  atualize o Expo Go; se mesmo assim não abrir, use o APK.
+- Para uma demonstração sem o computador, ou com Google e push, use o APK da seção 3.
+
+## 3. Instalar o app no celular (APK)
 
 O login com Google e o link de confirmação por e-mail abrem o app pelo endereço `tracked://`, e isso
 só funciona num app "de desenvolvimento" gerado pelo EAS. Você gera o APK uma vez e o reutiliza
@@ -109,19 +145,9 @@ O roteiro de apresentação está em [`roteiro-demo.md`](roteiro-demo.md).
 ### E o iPhone?
 
 **Nada disto foi testado em iPhone.** Instalar um app próprio no iPhone exige a conta paga da Apple
-(US$ 99 por ano, via TestFlight). Sem ela, o caminho é o **Expo Go** (grátis na App Store):
-
-```bash
-npx expo start --go
-```
-
-A pessoa escaneia o QR code com a câmera. Limites:
-
-- **Seu computador precisa ficar ligado** e na mesma rede do celular (ou use `--tunnel`, mais lento).
-- **Login com Google não deve funcionar**: o retorno usa o endereço `tracked://`, que só existe no APK.
-  Use e-mail e senha ou "Continuar como visitante".
-- **Push não chega** no Expo Go. O sino dentro do app deve funcionar.
-- A versão do Expo Go da App Store precisa suportar o SDK do projeto (SDK 58); senão o app não abre.
+(US$ 99 por ano, via TestFlight). Sem ela, o caminho é o **Expo Go**, descrito no
+[atalho da seção 2](#atalho-rodar-só-com-o-expo-go-sem-gerar-apk), com as mesmas limitações
+(sem Google, sem push, computador ligado).
 
 Para Android não há essas limitações: basta mandar o link do APK.
 
