@@ -2,16 +2,19 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
+import { CountryPicker } from '@/components/CountryPicker';
 import { Screen } from '@/components/Screen';
 import { ControlledField } from '@/components/TextField';
 import { refreshProfile } from '@/features/auth/bootstrap';
 import { unregisterPush } from '@/features/notifications/push';
 import { uploadAvatar } from '@/features/profile/avatar';
+import { COUNTRIES, countryName, flagOf } from '@/lib/countries';
 import { EditProfileValues, editProfileSchema } from '@/lib/validation';
 import { supabase } from '@/services/supabase/client';
 import { useAuth } from '@/stores/auth';
@@ -25,6 +28,8 @@ export default function EditProfileScreen() {
 
   const [localUri, setLocalUri] = useState<string | null>(null);
   const [reviewsPrivate, setReviewsPrivate] = useState(profile?.reviews_private ?? false);
+  const [country, setCountry] = useState<string | null>(profile?.country ?? null);
+  const [pickingCountry, setPickingCountry] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -65,6 +70,7 @@ export default function EditProfileScreen() {
           display_name: displayName,
           bio: bio.trim() || null,
           reviews_private: reviewsPrivate,
+          country,
           avatar_url: avatarUrl,
         })
         .eq('id', session.user.id);
@@ -109,6 +115,22 @@ export default function EditProfileScreen() {
           maxLength={160}
         />
 
+        <Pressable
+          onPress={() => setPickingCountry(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`País: ${countryName(country) ?? 'não informado'}. Toque para mudar.`}
+          style={styles.countryRow}
+        >
+          <View style={styles.switchText}>
+            <Text style={styles.switchLabel}>País</Text>
+            <Text style={styles.switchHint}>Aparece no seu perfil com a bandeira.</Text>
+          </View>
+          <Text style={styles.countryValue}>
+            {country ? `${flagOf(country)} ${countryName(country)}` : 'Não informado'}
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.fog} />
+        </Pressable>
+
         <View style={styles.switchRow}>
           <View style={styles.switchText}>
             <Text style={styles.switchLabel}>Reviews privadas</Text>
@@ -133,6 +155,20 @@ export default function EditProfileScreen() {
         <Button label="Salvar" loading={isSubmitting} onPress={onSubmit} />
       </View>
 
+      <CountryPicker
+        visible={pickingCountry}
+        title="Seu país"
+        countries={COUNTRIES}
+        selected={country}
+        noneLabel="Não informar"
+        noneIcon="🚫"
+        onSelect={(code) => {
+          setCountry(code);
+          setPickingCountry(false);
+        }}
+        onClose={() => setPickingCountry(false)}
+      />
+
       <View style={styles.more}>
         <Button
           label="Editar artistas favoritos"
@@ -152,6 +188,15 @@ const styles = StyleSheet.create({
   photoLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.teal },
   handle: { ...type.body, color: colors.fog },
   form: { gap: spacing.md, marginTop: spacing.sm },
+  countryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.field,
+    backgroundColor: colors.sleeve,
+  },
+  countryValue: { fontFamily: fonts.medium, fontSize: 15, color: colors.paper },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

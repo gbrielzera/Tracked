@@ -55,3 +55,15 @@ await db.query("update public.media_items set title = 'Song One' where id = $1",
 const guestEnsure = await ensure(carol, true, 'track', '99', 'Nope');
 check('visitante nao registra item', guestEnsure.code === '42501');
 export { t1 };
+
+// ---------- nacionalidade do perfil ----------
+await as(db, alice);
+check('define a propria nacionalidade', !(await attempt(db, "update public.profiles set country = 'BR' where id = $1", [alice])).error);
+check('nacionalidade minuscula e recusada', (await attempt(db, "update public.profiles set country = 'br' where id = $1", [alice])).code === '23514');
+check('nacionalidade com 3 letras e recusada', (await attempt(db, "update public.profiles set country = 'BRA' where id = $1", [alice])).code === '23514');
+check('nacionalidade pode ser removida', !(await attempt(db, 'update public.profiles set country = null where id = $1', [alice])).error);
+await db.query("update public.profiles set country = 'PT' where id = $1", [alice]);
+const otherCountry = await db.query("update public.profiles set country = 'US' where id = $1 returning id", [bob]);
+check('nao altera a nacionalidade de outra pessoa (RLS)', otherCountry.rows.length === 0);
+await as(db, bob);
+check('perfil de outra pessoa mostra a nacionalidade', (await one('select country from public.profiles where id = $1', [alice])).country === 'PT');

@@ -81,5 +81,6 @@ export interface MusicProvider {
   getArtist(id: string): Promise<Artist>;
   getArtistTopTracks(id: string, limit?: number): Promise<Track[]>;
   getArtistAlbums(artist: ArtistRef, opts?: PageOptions): Promise<Page<Album>>;
-  getChart(limit?: number): Promise<Chart>;
+  // Sem país: ranking global do Deezer. Com país (ISO alfa-2): playlist oficial "Top <país>".
+  getChart(limit?: number, country?: string): Promise<Chart>;
 }

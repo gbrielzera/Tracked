@@ -5,8 +5,13 @@ import type { ArtistRef, MediaKind } from '@/services/music';
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
-export const useChart = (limit = 25) =>
-  useQuery({ queryKey: ['chart', limit], queryFn: () => musicProvider.getChart(limit), staleTime: HOUR });
+// country: código ISO alfa-2 do ranking por país; ausente = global.
+export const useChart = (limit = 25, country?: string) =>
+  useQuery({
+    queryKey: ['chart', limit, country ?? 'world'],
+    queryFn: () => musicProvider.getChart(limit, country),
+    staleTime: HOUR,
+  });
 
 export const useTrack = (id: string) =>
   useQuery({ queryKey: ['deezer', 'track', id], queryFn: () => musicProvider.getTrack(id), staleTime: DAY });

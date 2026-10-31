@@ -35,6 +35,7 @@ export type PublicProfile = {
   avatarUrl: string | null;
   bio: string | null;
   reviewsPrivate: boolean;
+  country: string | null;
 };
 
 export function useProfile(username: string) {
@@ -43,7 +44,7 @@ export function useProfile(username: string) {
     queryFn: async (): Promise<PublicProfile | null> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, display_name, avatar_url, bio, reviews_private')
+        .select('id, username, display_name, avatar_url, bio, reviews_private, country')
         .eq('username', username)
         .maybeSingle();
       if (error) throw error;
@@ -55,6 +56,7 @@ export function useProfile(username: string) {
         avatarUrl: data.avatar_url,
         bio: data.bio,
         reviewsPrivate: data.reviews_private,
+        country: data.country,
       };
     },
   });

@@ -39,9 +39,15 @@ export type RawTrack = {
   duration?: number;
   release_date?: string | null;
   explicit_lyrics?: boolean;
-  artist: { id: number; name: string };
+  artist: RawImages & { id: number; name: string };
   album?: RawImages & { id: number; title: string; release_date?: string | null };
 };
+
+// Álbum e artista de uma faixa, no formato dos itens de catálogo (usado nos rankings por país,
+// que só trazem faixas). O artista da faixa já vem com a foto.
+export const albumOfTrack = (raw: RawTrack): Album | null =>
+  raw.album ? mapAlbum(raw.album, artistRef(raw.artist)) : null;
+export const artistOfTrack = (raw: RawTrack): Artist => mapArtist(raw.artist);
 
 export type RawList<T> = { data?: T[]; total?: number; next?: string };
 

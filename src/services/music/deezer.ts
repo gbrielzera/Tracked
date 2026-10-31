@@ -1,3 +1,4 @@
+import { COUNTRY_CHART_PLAYLISTS } from './charts';
 import { DeezerClient, deezerClient } from './deezerClient';
 import { MusicApiError } from './errors';
 import {
@@ -5,6 +6,8 @@ import {
   RawArtist,
   RawList,
   RawTrack,
+  albumOfTrack,
+  artistOfTrack,
   mapAlbum,
   mapAlbumTracks,
   mapArtist,
@@ -84,7 +87,29 @@ export function createDeezerProvider(client: DeezerClient = deezerClient): Music
       return toPage(list, index, (raw) => mapAlbum(raw, artist));
     },
 
-    async getChart(limit = 25): Promise<Chart> {
+    async getChart(limit = 25, country?: string): Promise<Chart> {
+      if (country) {
+        const playlist = COUNTRY_CHART_PLAYLISTS[country];
+        if (!playlist) throw new MusicApiError('not_found', `Sem ranking para o país ${country}`);
+
+        // A playlist só traz faixas; álbuns e artistas saem delas, na ordem em que aparecem.
+        const list = await client.get<RawList<RawTrack>>(`/playlist/${playlist}/tracks`, { limit: 100 });
+        const raws = list.data ?? [];
+        const albums = new Map<string, Album>();
+        const artists = new Map<string, Artist>();
+        for (const raw of raws) {
+          const album = albumOfTrack(raw);
+          if (album && !albums.has(album.id)) albums.set(album.id, album);
+          const artist = artistOfTrack(raw);
+          if (!artists.has(artist.id)) artists.set(artist.id, artist);
+        }
+        return {
+          tracks: raws.slice(0, limit).map((raw) => mapTrack(raw)),
+          albums: [...albums.values()].slice(0, limit),
+          artists: [...artists.values()].slice(0, limit),
+        };
+      }
+
       const chart = await client.get<{
         tracks?: RawList<RawTrack>;
         albums?: RawList<RawAlbum>;

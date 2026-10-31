@@ -8,6 +8,7 @@ import { PullRefresh } from '@/components/PullRefresh';
 import { ReviewCardView } from '@/components/ReviewCardView';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { useProfile, useProfileStats, useToggleFollow, useUserReviews } from '@/features/social/queries';
+import { countryName, flagOf } from '@/lib/countries';
 import { useAuth, useAuthStatus } from '@/stores/auth';
 import { colors, fonts, spacing, type } from '@/theme';
 import { useFavoriteArtists } from './favorites';
@@ -83,6 +84,11 @@ export function ProfileView({ username }: { username: string }) {
         <View style={styles.names}>
           <Text style={styles.name}>{profile.displayName}</Text>
           <Text style={styles.handle}>@{profile.username}</Text>
+          {countryName(profile.country) ? (
+            <Text style={styles.country} accessibilityLabel={`País: ${countryName(profile.country)}`}>
+              {flagOf(profile.country)} {countryName(profile.country)}
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -169,6 +175,7 @@ const styles = StyleSheet.create({
   names: { flex: 1, gap: 2 },
   name: { ...type.title, color: colors.paper },
   handle: { ...type.body, color: colors.fog },
+  country: { ...type.body, color: colors.paper },
   bio: { ...type.body, color: colors.paper },
   section: { gap: spacing.sm },
   heading: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 26, color: colors.paper, letterSpacing: -0.3 },

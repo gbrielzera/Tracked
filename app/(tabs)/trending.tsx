@@ -1,15 +1,18 @@
 import { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { CountryPicker } from '@/components/CountryPicker';
 import { MediaRow, RankNumber } from '@/components/MediaRow';
 import { PullRefresh } from '@/components/PullRefresh';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { useChart } from '@/features/music/queries';
 import { RankingList, useRankings } from '@/features/rankings/queries';
+import { COUNTRIES, countryName, flagOf } from '@/lib/countries';
 import { formatRating } from '@/lib/format';
-import { colors, fonts, type } from '@/theme';
+import { chartCountries } from '@/services/music/charts';
+import { colors, fonts, radius, type } from '@/theme';
 
 type Mode = 'hot' | 'top';
 type HotKind = 'track' | 'album' | 'artist';
@@ -49,7 +52,9 @@ export default function TrendingScreen() {
   const [hotKind, setHotKind] = useState<HotKind>('track');
   const [topList, setTopList] = useState<RankingList>('track');
 
-  const chart = useChart(50);
+  const [country, setCountry] = useState<string | null>(null);
+  const [pickingCountry, setPickingCountry] = useState(false);
+  const chart = useChart(50, country ?? undefined);
   const rankings = useRankings(topList, mode === 'top');
   const query = mode === 'hot' ? chart : rankings;
 
@@ -106,7 +111,19 @@ export default function TrendingScreen() {
       <View style={styles.controls}>
         <SegmentedControl options={MODES} value={mode} onChange={setMode} />
         {mode === 'hot' ? (
-          <SegmentedControl options={HOT_KINDS} value={hotKind} onChange={setHotKind} />
+          <>
+            <SegmentedControl options={HOT_KINDS} value={hotKind} onChange={setHotKind} />
+            <Pressable
+              onPress={() => setPickingCountry(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Ranking de: ${country ? countryName(country) : 'o mundo todo'}. Toque para mudar.`}
+              style={styles.countryChip}
+            >
+              <Text style={styles.countryFlag}>{country ? flagOf(country) : '🌍'}</Text>
+              <Text style={styles.countryLabel}>{country ? countryName(country) : 'Global'}</Text>
+              <Ionicons name="chevron-down" size={16} color={colors.fog} />
+            </Pressable>
+          </>
         ) : (
           <SegmentedControl options={TOP_LISTS} value={topList} onChange={setTopList} />
         )}
@@ -149,11 +166,41 @@ export default function TrendingScreen() {
           )}
         />
       )}
+      <CountryPicker
+        visible={pickingCountry}
+        title="Ranking por país"
+        countries={CHART_COUNTRIES}
+        selected={country}
+        noneLabel="Global"
+        onSelect={(code) => {
+          setCountry(code);
+          setPickingCountry(false);
+        }}
+        onClose={() => setPickingCountry(false)}
+      />
     </View>
   );
 }
 
+// Só os países com playlist oficial do Deezer.
+const CHART_COUNTRIES = COUNTRIES.filter((c) => chartCountries.includes(c.code));
+
 const styles = StyleSheet.create({
+  countryChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 16,
+    minHeight: 40,
+    paddingHorizontal: 14,
+    borderRadius: radius.button,
+    backgroundColor: colors.sleeve,
+    borderWidth: 1.5,
+    borderColor: colors.groove,
+  },
+  countryFlag: { fontSize: 18 },
+  countryLabel: { fontFamily: fonts.medium, fontSize: 15, color: colors.paper },
   screen: { flex: 1, backgroundColor: colors.background },
   controls: { gap: 8, paddingTop: 8, paddingBottom: 8 },
   list: { paddingBottom: 24 },
