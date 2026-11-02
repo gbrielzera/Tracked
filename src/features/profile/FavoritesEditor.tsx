@@ -8,6 +8,7 @@ import { MediaRow } from '@/components/MediaRow';
 import { Screen } from '@/components/Screen';
 import { ErrorState } from '@/components/states';
 import { useSearch } from '@/features/music/queries';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import type { Artist, MediaItem, Track } from '@/services/music';
 import { useAuth } from '@/stores/auth';
 import { colors, fonts, radius, spacing, type } from '@/theme';
@@ -103,7 +104,10 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
   const [entries, setEntries] = useState<FavoriteEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [text, setText] = useState('');
+  // A busca acompanha a digitação (com uma pausa, para poupar a cota do Deezer); o Enter não espera.
   const [submitted, setSubmitted] = useState('');
+  const debounced = useDebouncedValue(text.trim(), 400);
+  useEffect(() => setSubmitted(debounced), [debounced]);
 
   // Carrega a lista salva uma única vez.
   useEffect(() => {
@@ -136,10 +140,7 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
       return next;
     });
 
-  const submitSearch = () => {
-    const value = text.trim();
-    if (value.length >= 2) setSubmitted(value);
-  };
+  const submitSearch = () => setSubmitted(text.trim());
 
   const onSave = () => save.mutate(entries, { onSuccess: () => router.back() });
 
@@ -256,9 +257,6 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
                 style={styles.input}
               />
             </View>
-            <Pressable onPress={submitSearch} accessibilityRole="button" style={styles.searchButton}>
-              <Text style={styles.searchLabel}>Buscar</Text>
-            </Pressable>
           </View>
 
           {search.isFetching && results.length === 0 ? (
@@ -331,15 +329,6 @@ const styles = StyleSheet.create({
     borderColor: colors.groove,
   },
   input: { flex: 1, color: colors.paper, fontFamily: fonts.regular, fontSize: 16, paddingVertical: 10 },
-  searchButton: {
-    minHeight: 48,
-    paddingHorizontal: 16,
-    borderRadius: radius.button,
-    backgroundColor: colors.mustard,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchLabel: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
   loading: { paddingVertical: spacing.md },
   results: { marginHorizontal: -spacing.lg },
   error: { ...type.small, color: colors.danger },
