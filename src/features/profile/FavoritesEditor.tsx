@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/Button';
@@ -103,6 +103,12 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
   const saved = useFavorites(kind, userId);
   const [entries, setEntries] = useState<FavoriteEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // A lista de cima ocupa a tela: ao tocar na busca, rola até ela para o teclado não esconder os resultados.
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const addY = useRef(0);
+  const scrollToSearch = () =>
+    setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(addY.current - 8, 0), animated: true }), 250);
+
   const [text, setText] = useState('');
   // A busca acompanha a digitação (com uma pausa, para poupar a cota do Deezer); o Enter não espera.
   const [submitted, setSubmitted] = useState('');
@@ -149,6 +155,14 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
     .slice(0, 10);
   const suggested = (suggestions.data ?? []).filter((s) => !has(s.externalId));
 
+  // Quando os primeiros resultados aparecem, leva a tela até eles (o conteúdo só cresce agora).
+  const hadResults = useRef(false);
+  useEffect(() => {
+    if (results.length > 0 && !hadResults.current) scrollToSearch();
+    hadResults.current = results.length > 0;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results.length]);
+
   // Sem carregar a lista salva, não dá para editar: salvar uma lista vazia apagaria os favoritos.
   if (saved.isError) {
     return <ErrorState error={saved.error} message={copy.loadError} onRetry={() => void saved.refetch()} />;
@@ -185,7 +199,7 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
   };
 
   return (
-    <Screen edges={['bottom']}>
+    <Screen edges={['bottom']} scrollRef={scrollRef}>
       <Text style={styles.title}>{copy.title}</Text>
       <Text style={styles.body}>{copy.body}</Text>
 
@@ -218,7 +232,7 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
       </View>
 
       {!full ? (
-        <View style={styles.add}>
+        <View style={styles.add} onLayout={(event) => (addY.current = event.nativeEvent.layout.y)}>
           <Text style={styles.heading}>{copy.addHeading}</Text>
 
           {suggested.length > 0 && submitted.length === 0 ? (
@@ -246,6 +260,7 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
               <TextInput
                 value={text}
                 onChangeText={setText}
+                onFocus={scrollToSearch}
                 onSubmitEditing={submitSearch}
                 placeholder={copy.placeholder}
                 placeholderTextColor={colors.fog}

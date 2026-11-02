@@ -7,14 +7,17 @@ type Props = {
   scroll?: boolean;
   edges?: Edge[];
   style?: StyleProp<ViewStyle>;
+  // Para a tela poder rolar sozinha até um campo (ex.: busca com a lista longa acima dela).
+  scrollRef?: React.RefObject<React.ComponentRef<typeof ScrollView> | null>;
 };
 
-export function Screen({ children, scroll = true, edges = ['top', 'bottom'], style }: Props) {
+export function Screen({ children, scroll = true, edges = ['top', 'bottom'], style, scrollRef }: Props) {
   return (
     <SafeAreaView style={styles.root} edges={edges}>
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         {scroll ? (
           <ScrollView
+            ref={scrollRef}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.content, style]}
