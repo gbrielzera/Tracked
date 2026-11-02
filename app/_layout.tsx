@@ -98,6 +98,7 @@ export default function RootLayout() {
           <Stack.Screen name="notifications" options={titledOptions('Notificações')} />
           <Stack.Screen name="settings/edit-profile" options={titledOptions('Editar perfil')} />
           <Stack.Screen name="settings/favorites" options={titledOptions('Artistas favoritos')} />
+          <Stack.Screen name="settings/favorite-tracks" options={titledOptions('Músicas do momento')} />
         </Stack.Protected>
         <Stack.Protected guard={status === 'guest'}>
           <Stack.Screen name="upgrade" options={{ presentation: 'modal' }} />

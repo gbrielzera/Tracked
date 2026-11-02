@@ -202,6 +202,12 @@ export default function EditProfileScreen() {
           icon="star-outline"
           onPress={() => router.push('/settings/favorites')}
         />
+        <Button
+          label="Editar músicas do momento"
+          variant="secondary"
+          icon="musical-notes-outline"
+          onPress={() => router.push('/settings/favorite-tracks')}
+        />
         <Button label="Sair da conta" variant="ghost" onPress={() => void signOut()} disabled={deleting} />
         <Button label="Excluir conta" variant="danger" loading={deleting} onPress={confirmDelete} />
       </View>

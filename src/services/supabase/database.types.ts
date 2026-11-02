@@ -72,6 +72,39 @@ export type Database = {
           },
         ]
       }
+      favorite_tracks: {
+        Row: {
+          media_item_id: string
+          position: number
+          user_id: string
+        }
+        Insert: {
+          media_item_id: string
+          position: number
+          user_id: string
+        }
+        Update: {
+          media_item_id?: string
+          position?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_tracks_media_item_id_fkey"
+            columns: ["media_item_id"]
+            isOneToOne: false
+            referencedRelation: "media_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_tracks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -558,6 +591,10 @@ export type Database = {
         Args: { p_media_item_ids: string[] }
         Returns: undefined
       }
+      set_favorite_tracks: {
+        Args: { p_media_item_ids: string[] }
+        Returns: undefined
+      }
       suggest_favorite_artists: {
         Args: { p_limit?: number }
         Returns: {
@@ -565,6 +602,16 @@ export type Database = {
           artist_name: string
           avg_rating: number
           reviews_count: number
+        }[]
+      }
+      suggest_favorite_tracks: {
+        Args: { p_limit?: number }
+        Returns: {
+          artist_name: string
+          cover_url: string
+          rating: number
+          title: string
+          track_external_id: string
         }[]
       }
     }

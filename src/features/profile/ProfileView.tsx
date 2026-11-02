@@ -1,8 +1,9 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
-import { FavoriteStrip } from '@/components/FavoriteStrip';
+import { FavoriteSection } from '@/components/FavoriteSection';
 import { ProfileStats } from '@/components/ProfileStats';
 import { PullRefresh } from '@/components/PullRefresh';
 import { ReviewCardView } from '@/components/ReviewCardView';
@@ -11,7 +12,6 @@ import { useProfile, useProfileStats, useToggleFollow, useUserReviews } from '@/
 import { countryName, flagOf } from '@/lib/countries';
 import { useAuth, useAuthStatus } from '@/stores/auth';
 import { colors, fonts, spacing, type } from '@/theme';
-import { useFavoriteArtists } from './favorites';
 
 function FollowButton({ targetId }: { targetId: string }) {
   const router = useRouter();
@@ -41,6 +41,7 @@ function FollowButton({ targetId }: { targetId: string }) {
 // Perfil de qualquer pessoa, inclusive o próprio (aba Perfil e tela /user/@).
 export function ProfileView({ username }: { username: string }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const myId = useAuth((s) => s.session?.user.id);
 
   const profileQuery = useProfile(username);
@@ -49,7 +50,6 @@ export function ProfileView({ username }: { username: string }) {
   const hideReviews = !!profile?.reviewsPrivate && !isOwn;
 
   const stats = useProfileStats(profile?.id);
-  const favorites = useFavoriteArtists(profile?.id);
   const reviews = useUserReviews(hideReviews ? undefined : profile?.id);
 
   if (profileQuery.isPending) return <LoadingState />;
@@ -67,13 +67,12 @@ export function ProfileView({ username }: { username: string }) {
   }
 
   const items = reviews.data?.pages.flat() ?? [];
-  const favoriteEntries = favorites.data ?? [];
   const refreshing = profileQuery.isRefetching || reviews.isRefetching;
 
   const refresh = () => {
     void profileQuery.refetch();
     void stats.refetch();
-    void favorites.refetch();
+    void queryClient.invalidateQueries({ queryKey: ['favorites'] });
     if (!hideReviews) void reviews.refetch();
   };
 
@@ -116,16 +115,8 @@ export function ProfileView({ username }: { username: string }) {
         ]}
       />
 
-      {isOwn || favoriteEntries.length > 0 ? (
-        <View style={styles.section}>
-          <Text style={styles.heading}>Top 5 artistas</Text>
-          <FavoriteStrip
-            entries={favoriteEntries}
-            editable={isOwn}
-            onEdit={() => router.push('/settings/favorites')}
-          />
-        </View>
-      ) : null}
+      <FavoriteSection kind="artist" userId={profile.id} isOwn={isOwn} />
+      <FavoriteSection kind="track" userId={profile.id} isOwn={isOwn} />
 
       {isOwn && profile.reviewsPrivate ? (
         <Text style={styles.note}>Suas reviews estão privadas: só você vê esta lista.</Text>
@@ -177,7 +168,6 @@ const styles = StyleSheet.create({
   handle: { ...type.body, color: colors.fog },
   country: { ...type.body, color: colors.paper },
   bio: { ...type.body, color: colors.paper },
-  section: { gap: spacing.sm },
   heading: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 26, color: colors.paper, letterSpacing: -0.3 },
   note: { ...type.body, color: colors.fog },
   loading: { paddingVertical: spacing.lg },

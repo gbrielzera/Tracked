@@ -15,7 +15,8 @@ serviços gratuitos.
   editável e excluível. Um interruptor deixa todas as suas reviews privadas.
 - **Trending** com dois rankings: *Em alta* (global ou por país, a partir do Deezer) e *Mais bem
   avaliados* (a comunidade do Tracked, pela média bayesiana).
-- **Perfil** com foto, nome, @, país com bandeira, Top 5 de artistas e contadores.
+- **Perfil** com foto, nome, @, país com bandeira, contadores, **Top 5 artistas** e **5 músicas do momento**
+  (listas escolhidas por você, reordenáveis, com sugestões a partir das suas reviews).
 - **Social:** seguir pessoas, feed com as reviews de quem você segue, curtidas, comentários e
   denúncias.
 - **Notificações** dentro do app em tempo real e **push** no Android.
@@ -65,7 +66,7 @@ Roda três conjuntos, sem Docker e sem conta no Supabase (os detalhes estão em
 
 | Comando | Cobre | Testes |
 |---|---|---|
-| `npm run test:db` | Regras de acesso (RLS), triggers, feed, limites e rankings, rodando as migrations reais num Postgres em memória | 119 |
+| `npm run test:db` | Regras de acesso (RLS), triggers, feed, limites e rankings, rodando as migrations reais num Postgres em memória | 135 |
 | `npm run test:functions` | Lógica das mensagens de push | 15 |
 | `npm run test:app` | Formatação, validação, filtro de palavrões, países, histórico e o provedor do Deezer | 50 |
 

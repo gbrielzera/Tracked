@@ -12,7 +12,7 @@ Duração prevista: **8 a 10 minutos**. Tudo roda num celular Android com o APK 
       cada uma com @, foto e país. Não escreva as senhas neste arquivo.
 - [ ] Faça as duas contas **avaliarem as mesmas 4 ou 5 músicas** com notas diferentes. Um item só
       entra em "Mais bem avaliados" com pelo menos 2 avaliações de contas (visitantes não contam).
-- [ ] Monte o **Top 5 artistas** da conta principal e deixe um comentário em uma review.
+- [ ] Monte o **Top 5 artistas** e as **5 músicas do momento** da conta principal e deixe um comentário em uma review.
 - [ ] Crie **uma conta descartável** só para mostrar "Excluir conta" (não use a principal).
 
 ## 30 minutos antes
@@ -35,11 +35,11 @@ Duração prevista: **8 a 10 minutos**. Tudo roda num celular Android com o APK 
 | 3:00 | Abrir uma música, dar **nota com meia estrela** e publicar uma review | "Uma review por pessoa por item, editável. Dá para arrastar o dedo nas estrelas." Mostre o resumo com **editar/excluir**. |
 | 4:00 | **Trending > Em alta**, trocar o país (ex.: Portugal) | "O Deezer só tem o ranking global, então usamos as playlists oficiais de cada país." |
 | 4:45 | **Trending > Mais bem avaliados** | "Ranking da própria comunidade, pela média bayesiana: uma nota 5 sozinha não passa na frente de um item com muitas notas boas." |
-| 5:30 | **Perfil**: foto, bandeira, Top 5, contadores; abrir *Editar perfil* e mostrar **Reviews privadas** | "Com o interruptor ligado, nenhuma review aparece para os outros. A regra está no banco (RLS), e foi testada." |
+| 5:30 | **Perfil**: foto, bandeira, contadores, Top 5 artistas e músicas do momento; abrir *Editar perfil* e mostrar **Reviews privadas** | "Com o interruptor ligado, nenhuma review aparece para os outros. A regra está no banco (RLS), e foi testada." |
 | 6:30 | **Notificações**: com o app **fechado**, a segunda conta segue ou curte uma review | Mostre o **push** chegando, toque nele e mostre que abre a tela certa. Depois abra o sino e o contador zerando. |
 | 7:30 | Puxar a tela para atualizar no Feed | "Feed só com quem eu sigo, paginado sem pular nem repetir." |
 | 8:00 | (Opcional) Entrar na conta **descartável** e usar **Excluir conta** | "Exigência das lojas: apaga avatar, reviews e comentários de verdade." |
-| 8:30 | Encerrar | Stack: Expo/React Native, Supabase (Postgres, RLS, Realtime, Edge Functions), Deezer e Last.fm. 184 testes automáticos. |
+| 8:30 | Encerrar | Stack: Expo/React Native, Supabase (Postgres, RLS, Realtime, Edge Functions), Deezer e Last.fm. 200 testes automáticos. |
 
 ## Se algo der errado
 
