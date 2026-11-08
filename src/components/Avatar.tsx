@@ -7,7 +7,17 @@ type Props = { uri?: string | null; name?: string | null; size?: number };
 export function Avatar({ uri, name, size = 96 }: Props) {
   const box = { width: size, height: size, borderRadius: size / 2 };
   if (uri) {
-    return <Image source={{ uri }} style={[styles.image, box]} contentFit="cover" accessibilityLabel="Foto de perfil" />;
+    // A URL do avatar muda quando a foto muda (?v=...), então o cache não segura foto velha.
+    return (
+      <Image
+        source={{ uri }}
+        style={[styles.image, box]}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        recyclingKey={uri}
+        accessibilityLabel="Foto de perfil"
+      />
+    );
   }
   const initial = (name ?? '?').trim().charAt(0).toUpperCase() || '?';
   return (

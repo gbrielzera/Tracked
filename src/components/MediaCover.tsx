@@ -9,7 +9,19 @@ export function MediaCover({ uri, size, round = false }: Props) {
   const box = { width: size, height: size, borderRadius: round ? size / 2 : Math.max(6, size * 0.08) };
   if (uri) {
     // Capa é decorativa: o título e o artista ao lado já dizem o que é.
-    return <Image source={{ uri }} style={[styles.image, box]} contentFit="cover" transition={150} accessible={false} />;
+    // Cache em memória e disco (não pisca ao voltar para a tela); a URL como chave de reciclagem
+    // impede que, numa lista rolando rápido, a capa de outra linha apareça por um instante.
+    return (
+      <Image
+        source={{ uri }}
+        style={[styles.image, box]}
+        contentFit="cover"
+        transition={150}
+        cachePolicy="memory-disk"
+        recyclingKey={uri}
+        accessible={false}
+      />
+    );
   }
   return (
     <View style={[styles.fallback, box]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
