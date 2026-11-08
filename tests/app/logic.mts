@@ -14,6 +14,7 @@ import { createDeezerProvider } from '../../src/services/music/deezer.ts';
 import { MusicApiError } from '../../src/services/music/errors.ts';
 import { MAX_STEP, staffGeometry, stemsUp } from '../../src/lib/staff.ts';
 import { classifyFailure, failureMessage } from '../../src/lib/errors.ts';
+import { deezerImageAt } from '../../src/lib/images.ts';
 
 let failed = 0;
 let passed = 0;
@@ -148,6 +149,13 @@ check('mensagens diferentes por motivo', new Set([
   failureMessage(null, false), failureMessage(networkFail, true), failureMessage({ code: '1', message: 'x' }, true),
   failureMessage(new MusicApiError('network'), true), failureMessage(new MusicApiError('rate_limited'), true),
 ]).size === 5);
+
+// ---------- capa grande para a imagem de compartilhar ----------
+const md = 'https://cdn-images.dzcdn.net/images/cover/4c07cc728fd1531094bbf11235afef34/250x250-000000-80-0-0.jpg';
+check('capa do Deezer vira 1000px', deezerImageAt(md, 1000) === md.replace('/250x250-', '/1000x1000-'));
+check('foto de artista do Deezer tambem', deezerImageAt('https://cdn-images.dzcdn.net/images/artist/abc/56x56-000000-80-0-0.jpg', 1000)?.endsWith('/1000x1000-000000-80-0-0.jpg') === true);
+check('endereco de outro formato fica igual', deezerImageAt('https://x.supabase.co/avatars/u/avatar.jpg?v=1', 1000) === 'https://x.supabase.co/avatars/u/avatar.jpg?v=1');
+check('sem capa continua sem capa', deezerImageAt(null, 1000) === null && deezerImageAt('', 1000) === null);
 
 console.log(failed === 0 ? `\nTODOS OS ${passed} TESTES PASSARAM` : `\n${failed} FALHARAM, ${passed} passaram`);
 process.exit(failed === 0 ? 0 : 1);

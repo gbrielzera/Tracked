@@ -10,6 +10,7 @@ import { ReportModal } from '@/components/ReportModal';
 import { ReviewCardView } from '@/components/ReviewCardView';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { CommentComposer } from '@/features/reviews/CommentComposer';
+import { ShareReviewSheet } from '@/features/reviews/ShareReview';
 import { useComments, useDeleteComment, useReport, useReviewDetail } from '@/features/reviews/interactions';
 import { useRefresh } from '@/lib/useRefresh';
 import { useAuth } from '@/stores/auth';
@@ -28,6 +29,7 @@ export default function ReviewScreen() {
   const removeComment = useDeleteComment(id);
   const report = useReport();
   const [target, setTarget] = useState<ReportTarget | null>(null);
+  const [sharing, setSharing] = useState(false);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const refresh = useRefresh(() => Promise.all([review.refetch(), comments.refetch()]));
 
@@ -86,6 +88,7 @@ export default function ReviewScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ReviewCardView review={data} showAuthor showMedia openable={false} />
+        <Button label="Compartilhar como imagem" variant="secondary" icon="share-social-outline" onPress={() => setSharing(true)} />
         {!isOwnReview ? (
           <Pressable onPress={() => setTarget({ reviewId: data.id })} hitSlop={8} accessibilityRole="button">
             <Text style={styles.reportLink}>Denunciar esta review</Text>
@@ -123,6 +126,8 @@ export default function ReviewScreen() {
 
         <CommentComposer reviewId={data.id} />
       </ScrollView>
+
+      <ShareReviewSheet review={data} visible={sharing} onClose={() => setSharing(false)} />
 
       <ReportModal
         visible={target !== null}
