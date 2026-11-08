@@ -23,6 +23,10 @@ serviços gratuitos.
 - **Visitantes:** dá para explorar e comentar (até 3 vezes por dia) sem criar conta.
 - **Conta:** login por e-mail ou Google, recuperação de senha, e **Configurações** (engrenagem no cabeçalho do perfil)
   com editar perfil, sair da conta e exclusão da conta com todos os dados.
+- **Atividade no perfil:** última review, total avaliado por tipo (músicas, álbuns, artistas) e o artista
+  mais avaliado. Some para os outros quando as reviews são privadas.
+- **Compartilhar review como imagem** (9:16, para Stories e status), com capa, nota, texto e a marca do Tracked.
+- **Erros que dizem o motivo:** sem internet, servidor do Tracked fora do ar ou catálogo do Deezer indisponível.
 - **Carregando** com notas musicais passando por uma partitura, em todas as telas.
 
 ## Tecnologias
@@ -68,9 +72,9 @@ Roda três conjuntos, sem Docker e sem conta no Supabase (os detalhes estão em
 
 | Comando | Cobre | Testes |
 |---|---|---|
-| `npm run test:db` | Regras de acesso (RLS), triggers, feed, limites e rankings, rodando as migrations reais num Postgres em memória | 135 |
-| `npm run test:functions` | Lógica das mensagens de push | 15 |
-| `npm run test:app` | Formatação, validação, filtro de palavrões, países, histórico e o provedor do Deezer | 50 |
+| `npm run test:db` | Regras de acesso (RLS), triggers, feed, limites e rankings, rodando as migrations reais num Postgres em memória | 145 |
+| `npm run test:functions` | Lógica do push: mensagens, envio em lotes e respostas do Expo | 28 |
+| `npm run test:app` | Formatação, validação, filtro de palavrões, países, histórico, tipos de erro, partitura animada e o provedor do Deezer | 82 |
 
 Não há teste automatizado das telas: a interface foi validada à mão num Android.
 
