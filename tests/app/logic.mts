@@ -13,6 +13,7 @@ import { chartCountries, COUNTRY_CHART_PLAYLISTS } from '../../src/services/musi
 import { createDeezerProvider } from '../../src/services/music/deezer.ts';
 import { MusicApiError } from '../../src/services/music/errors.ts';
 import { MAX_STEP, staffGeometry, stemsUp } from '../../src/lib/staff.ts';
+import { classifyFailure, failureMessage } from '../../src/lib/errors.ts';
 
 let failed = 0;
 let passed = 0;
@@ -129,6 +130,24 @@ check('haste sobe nas notas baixas e desce nas altas', stemsUp([2]) && !stemsUp(
 check('haste de colcheias ligadas segue a media', stemsUp([3, 4]) && !stemsUp([4, 5]));
 check('versao compacta e proporcional', near(staffGeometry(0.5).height * 2, g1.height) && near(staffGeometry(0.5).gap * 2, g1.gap));
 check('largura de nota ligada cobre as duas cabecas', g1.noteWidth === g1.pairGap + g1.headW);
+
+// ---------- tipo de falha (mensagens de erro) ----------
+const networkFail = new TypeError('Network request failed');
+check('sem internet ganha de qualquer outro motivo', classifyFailure(new MusicApiError('rate_limited'), false) === 'offline' && classifyFailure(networkFail, false) === 'offline');
+check('Deezer: limite de buscas', classifyFailure(new MusicApiError('rate_limited'), true) === 'catalog_busy');
+check('Deezer: fora do ar', classifyFailure(new MusicApiError('network'), true) === 'catalog_down' && classifyFailure(new MusicApiError('invalid_response'), null) === 'catalog_down');
+check('Deezer: item inexistente', classifyFailure(new MusicApiError('not_found'), true) === 'not_found');
+check('Supabase: falha de rede = servidor fora do ar', classifyFailure({ message: 'TypeError: Network request failed', code: '' }, true) === 'server_down');
+check('Supabase: Edge Function sem resposta', classifyFailure({ name: 'FunctionsFetchError', message: 'Failed to send a request' }, true) === 'server_down');
+check('Supabase: 5xx = fora do ar (ex.: projeto pausado)', classifyFailure({ message: 'Service Unavailable', status: 503 }, true) === 'server_down');
+check('Supabase: erro do banco = servidor com problema', classifyFailure({ message: 'permission denied', code: '42501', details: null }, true) === 'server_error');
+check('Supabase: Edge Function respondeu erro', classifyFailure({ name: 'FunctionsHttpError', message: 'Edge Function returned a non-2xx status code' }, true) === 'server_error');
+check('sem saber da conexao, falha de rede ainda e servidor fora do ar', classifyFailure(networkFail, null) === 'server_down');
+check('erro desconhecido', classifyFailure('x', true) === 'unknown' && classifyFailure(null, true) === 'unknown' && classifyFailure(new Error('boom'), true) === 'unknown');
+check('mensagens diferentes por motivo', new Set([
+  failureMessage(null, false), failureMessage(networkFail, true), failureMessage({ code: '1', message: 'x' }, true),
+  failureMessage(new MusicApiError('network'), true), failureMessage(new MusicApiError('rate_limited'), true),
+]).size === 5);
 
 console.log(failed === 0 ? `\nTODOS OS ${passed} TESTES PASSARAM` : `\n${failed} FALHARAM, ${passed} passaram`);
 process.exit(failed === 0 ? 0 : 1);
