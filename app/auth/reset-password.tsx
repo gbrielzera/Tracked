@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -55,7 +56,7 @@ export default function ResetPasswordScreen() {
   if (phase === 'checking') {
     return (
       <Screen scroll={false} style={styles.center}>
-        <ActivityIndicator color={colors.mustard} size="large" />
+        <MusicLoader />
       </Screen>
     );
   }

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useRouter } from 'expo-router';
 import { Avatar } from '@/components/Avatar';
 import { PullRefresh } from '@/components/PullRefresh';
@@ -71,7 +72,7 @@ export default function NotificationsScreen() {
             if (list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();
           }}
           ListFooterComponent={
-            list.isFetchingNextPage ? <ActivityIndicator color={colors.mustard} style={styles.footer} /> : <View />
+            list.isFetchingNextPage ? <MusicLoader compact style={styles.footer} /> : <View />
           }
           renderItem={({ item }) => {
             const isNew = fresh.current.has(item.id);

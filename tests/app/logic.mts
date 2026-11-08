@@ -10,6 +10,7 @@ import { pushHistory } from '../../src/features/search/historyList.ts';
 import { chartCountries, COUNTRY_CHART_PLAYLISTS } from '../../src/services/music/charts.ts';
 import { createDeezerProvider } from '../../src/services/music/deezer.ts';
 import { MusicApiError } from '../../src/services/music/errors.ts';
+import { MAX_STEP, staffGeometry, stemsUp } from '../../src/lib/staff.ts';
 
 let failed = 0;
 let passed = 0;
@@ -104,6 +105,24 @@ let unsupported: unknown = null;
 try { await provider.getChart(10, 'UY'); } catch (error) { unsupported = error; }
 check('país sem ranking dá erro claro', unsupported instanceof MusicApiError && (unsupported as MusicApiError).code === 'not_found');
 check('busca vazia não chama a rede', (await provider.search('track', '   ')).items.length === 0 && !calls.some((c) => c.startsWith('/search')));
+
+// ---------- partitura animada (MusicLoader) ----------
+const g1 = staffGeometry(1);
+const near = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+check('nota no passo 0 fica na linha de baixo', near(g1.headY(0), g1.lineY(4)));
+check('nota no passo 8 fica na linha de cima', near(g1.headY(MAX_STEP), g1.lineY(0)));
+check('nota no passo 4 fica na linha do meio', near(g1.headY(4), g1.lineY(2)));
+check('passo 1 fica entre a 1a e a 2a linha de baixo', near(g1.headY(1), (g1.lineY(4) + g1.lineY(3)) / 2));
+check('as 5 linhas ficam dentro da altura do componente', g1.lineY(0) > 0 && g1.lineY(4) < g1.height);
+check('a maior cabeca cabe acima da linha de cima', g1.lineY(0) - g1.headH / 2 >= 0);
+// Pior caso das notas usadas no componente: haste subindo da posição mais alta com haste para cima (passo 3/4)
+// e descendo da mais baixa com haste para baixo (passo 4/5).
+check('haste para cima nao sai pelo topo do componente', g1.headY(4) - g1.stemH >= 0);
+check('haste para baixo nao sai pela base do componente', g1.headY(4) + g1.stemH <= g1.height);
+check('haste sobe nas notas baixas e desce nas altas', stemsUp([2]) && !stemsUp([5]) && !stemsUp([4]));
+check('haste de colcheias ligadas segue a media', stemsUp([3, 4]) && !stemsUp([4, 5]));
+check('versao compacta e proporcional', near(staffGeometry(0.5).height * 2, g1.height) && near(staffGeometry(0.5).gap * 2, g1.gap));
+check('largura de nota ligada cobre as duas cabecas', g1.noteWidth === g1.pairGap + g1.headW);
 
 console.log(failed === 0 ? `\nTODOS OS ${passed} TESTES PASSARAM` : `\n${failed} FALHARAM, ${passed} passaram`);
 process.exit(failed === 0 ? 0 : 1);

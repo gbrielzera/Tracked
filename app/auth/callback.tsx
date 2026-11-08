@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
@@ -42,7 +43,7 @@ export default function AuthCallbackScreen() {
         </>
       ) : (
         <>
-          <ActivityIndicator color={colors.mustard} size="large" />
+          <MusicLoader />
           <Text style={styles.text}>Entrando...</Text>
         </>
       )}

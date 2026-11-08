@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '@/components/Avatar';
@@ -128,7 +129,7 @@ export function ProfileView({ username }: { username: string }) {
   const empty = hideReviews ? (
     <Text style={styles.note}>As reviews desta pessoa são privadas.</Text>
   ) : reviews.isPending ? (
-    <ActivityIndicator color={colors.mustard} style={styles.loading} />
+    <MusicLoader compact style={styles.loading} />
   ) : reviews.isError ? (
     <Text style={styles.note}>Não foi possível carregar as reviews.</Text>
   ) : (
@@ -152,7 +153,7 @@ export function ProfileView({ username }: { username: string }) {
         if (reviews.hasNextPage && !reviews.isFetchingNextPage) void reviews.fetchNextPage();
       }}
       ListFooterComponent={
-        reviews.isFetchingNextPage ? <ActivityIndicator color={colors.mustard} style={styles.loading} /> : <View />
+        reviews.isFetchingNextPage ? <MusicLoader compact style={styles.loading} /> : <View />
       }
     />
   );

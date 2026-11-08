@@ -1,12 +1,13 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/Button';
+import { MusicLoader } from '@/components/MusicLoader';
 import { musicErrorMessage } from '@/services/music';
 import { colors, spacing, type } from '@/theme';
 
 export function LoadingState() {
   return (
-    <View style={styles.center} accessibilityLabel="Carregando">
-      <ActivityIndicator color={colors.mustard} size="large" />
+    <View style={styles.center}>
+      <MusicLoader />
     </View>
   );
 }

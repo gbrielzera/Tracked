@@ -1,4 +1,5 @@
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { colors, fonts, radius, spacing, type } from '@/theme';
 
 const REASONS = ['Spam ou propaganda', 'Ofensivo ou assédio', 'Fora do assunto', 'Outro motivo'];
@@ -19,7 +20,7 @@ export function ReportModal({ visible, title, busy, onClose, onSelect }: Props) 
       <View style={styles.sheet}>
         <Text style={styles.title}>{title}</Text>
         {busy ? (
-          <ActivityIndicator color={colors.mustard} style={styles.busy} />
+          <MusicLoader compact style={styles.busy} />
         ) : (
           REASONS.map((reason) => (
             <Pressable

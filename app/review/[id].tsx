@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
@@ -94,7 +95,7 @@ export default function ReviewScreen() {
         <Text style={styles.heading}>Comentários</Text>
 
         {comments.isPending ? (
-          <ActivityIndicator color={colors.mustard} style={styles.loading} />
+          <MusicLoader compact style={styles.loading} />
         ) : comments.isError ? (
           <Text style={styles.muted}>Não foi possível carregar os comentários.</Text>
         ) : list.length === 0 ? (

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
 import { ReviewCardView } from '@/components/ReviewCardView';
@@ -50,7 +51,7 @@ export function ReviewSection({ item }: { item: MediaItem }) {
       </View>
     );
   } else if (loadingMine) {
-    yourReview = <ActivityIndicator color={colors.mustard} style={styles.loading} />;
+    yourReview = <MusicLoader compact style={styles.loading} />;
   } else if (existing && !editing) {
     yourReview = (
       <MyReviewSummary review={existing} onEdit={() => setEditing(true)} onDeleted={() => flash('Review excluída.')} />

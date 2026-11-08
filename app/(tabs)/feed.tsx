@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useRouter } from 'expo-router';
 import { GuestGate } from '@/components/GuestGate';
 import { PullRefresh } from '@/components/PullRefresh';
@@ -65,7 +66,7 @@ export default function FeedScreen() {
         if (feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage();
       }}
       ListFooterComponent={
-        feed.isFetchingNextPage ? <ActivityIndicator color={colors.mustard} style={styles.footer} /> : <View />
+        feed.isFetchingNextPage ? <MusicLoader compact style={styles.footer} /> : <View />
       }
     />
   );

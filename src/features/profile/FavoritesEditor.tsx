@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/Button';
@@ -171,7 +172,7 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
   if (saved.isPending) {
     return (
       <Screen scroll={false} edges={['bottom']} style={styles.center}>
-        <ActivityIndicator color={colors.mustard} size="large" />
+        <MusicLoader />
       </Screen>
     );
   }
@@ -275,7 +276,7 @@ export function FavoritesEditor({ kind }: { kind: FavoriteKind }) {
           </View>
 
           {search.isFetching && results.length === 0 ? (
-            <ActivityIndicator color={colors.mustard} style={styles.loading} />
+            <MusicLoader compact style={styles.loading} />
           ) : null}
           {search.isError ? <Text style={styles.error}>Não foi possível buscar. Tente de novo.</Text> : null}
           <View style={styles.results}>{results.map(resultRow)}</View>

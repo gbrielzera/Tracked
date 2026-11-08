@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { PersonRow } from '@/components/PersonRow';
 import { PullRefresh } from '@/components/PullRefresh';
@@ -52,7 +53,7 @@ export function FollowListScreen({ direction }: { direction: 'followers' | 'foll
             if (list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();
           }}
           ListFooterComponent={
-            list.isFetchingNextPage ? <ActivityIndicator color={colors.mustard} style={styles.footer} /> : <View />
+            list.isFetchingNextPage ? <MusicLoader compact style={styles.footer} /> : <View />
           }
         />
       );

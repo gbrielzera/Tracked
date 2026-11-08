@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { MusicLoader } from '@/components/MusicLoader';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MediaRow } from '@/components/MediaRow';
@@ -193,7 +194,7 @@ export default function SearchScreen() {
         }}
         ListFooterComponent={
           singleQuery?.isFetchingNextPage ? (
-            <ActivityIndicator color={colors.mustard} style={styles.footer} />
+            <MusicLoader compact style={styles.footer} />
           ) : someFailed ? (
             <Text style={styles.partial}>Algumas buscas falharam. Puxe para baixo para tentar de novo.</Text>
           ) : undefined
