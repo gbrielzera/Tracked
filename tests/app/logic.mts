@@ -1,7 +1,9 @@
 // Testa a lógica pura do app (formatação, validação, filtro, países, histórico e o provedor Deezer
 // com um cliente falso, sem rede). Rode com: npm run test:app
 import { COUNTRIES, countryName, flagOf } from '../../src/lib/countries.ts';
-import { formatCount, formatDate, formatDuration, formatRating, formatRelative } from '../../src/lib/format.ts';
+import {
+  formatCount, formatDate, formatDuration, formatRating, formatRelative, formatReviewCounts, plural,
+} from '../../src/lib/format.ts';
 import { containsProfanity } from '../../src/lib/profanity.ts';
 import {
   editProfileSchema, loginSchema, onboardingSchema, resetSchema, signupSchema,
@@ -31,6 +33,10 @@ const now = Date.parse('2026-10-31T12:00:00Z');
 check('tempo relativo', formatRelative('2026-10-31T09:00:00Z', now) === 'há 3 horas');
 check('tempo relativo singular', formatRelative('2026-10-30T11:00:00Z', now) === 'há 1 dia');
 check('tempo relativo agora', formatRelative('2026-10-31T11:59:50Z', now) === 'agora');
+check('plural', plural(1, 'música', 'músicas') === '1 música' && plural(0, 'música', 'músicas') === '0 músicas' && plural(3, 'álbum', 'álbuns') === '3 álbuns');
+check('resumo por tipo', formatReviewCounts({ tracks: 42, albums: 7, artists: 3 }) === '42 músicas · 7 álbuns · 3 artistas');
+check('resumo omite tipos zerados', formatReviewCounts({ tracks: 1, albums: 0, artists: 2 }) === '1 música · 2 artistas');
+check('resumo vazio vira null', formatReviewCounts({ tracks: 0, albums: 0, artists: 0 }) === null);
 check('data futura não fica negativa', formatRelative('2027-01-01T00:00:00Z', now) === 'agora');
 
 // ---------- filtro de palavrões ----------

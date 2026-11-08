@@ -520,6 +520,17 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_profile_summary: {
+        Args: { p_user_id: string }
+        Returns: {
+          albums: number
+          artists: number
+          top_artist_external_id: string
+          top_artist_name: string
+          top_artist_reviews: number
+          tracks: number
+        }[]
+      }
       get_profile_stats: {
         Args: { p_user_id: string }
         Returns: {

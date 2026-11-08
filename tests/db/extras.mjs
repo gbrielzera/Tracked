@@ -79,6 +79,61 @@ await asAnonRole(db);
 check('sem login nao le musicas do momento', (await attempt(db, 'select * from public.favorite_tracks')).code === '42501');
 await as(db, alice);
 
+// ---------- resumo do perfil ----------
+const summaryOf = async (user) => (await db.query('select * from public.get_profile_summary($1)', [user])).rows[0];
+await admin(db);
+const expectedByKind = Object.fromEntries((await db.query(
+  "select m.kind::text as kind, count(*)::int as n from public.reviews r join public.media_items m on m.id = r.media_item_id where r.user_id = $1 group by m.kind", [alice],
+)).rows.map((row) => [row.kind, row.n]));
+const expectedTop = (await db.query(
+  `select case when m.kind = 'artist' then m.external_id else m.artist_external_id end as ext, count(*)::int as n
+   from public.reviews r join public.media_items m on m.id = r.media_item_id
+   where r.user_id = $1 group by 1 having (case when m.kind = 'artist' then m.external_id else m.artist_external_id end) is not null
+   order by count(*) desc, max(r.created_at) desc limit 1`, [alice],
+)).rows[0];
+await db.query('update public.profiles set reviews_private = false where id = $1', [alice]);
+
+await as(db, bob);
+let summary = await summaryOf(alice);
+check('resumo conta as reviews por tipo',
+  Number(summary.tracks) === (expectedByKind.track ?? 0) && Number(summary.albums) === (expectedByKind.album ?? 0) && Number(summary.artists) === (expectedByKind.artist ?? 0),
+  JSON.stringify({ summary, expectedByKind }));
+check('artista mais avaliado e o com mais reviews', !!expectedTop && summary.top_artist_external_id === expectedTop.ext && Number(summary.top_artist_reviews) === expectedTop.n, JSON.stringify({ summary, expectedTop }));
+check('resumo traz o nome do artista', typeof summary.top_artist_name === 'string' && summary.top_artist_name.length > 0);
+
+await as(db, alice);
+await db.query('update public.profiles set reviews_private = true where id = $1', [alice]);
+await as(db, bob);
+summary = await summaryOf(alice);
+check('reviews privadas: os outros veem o resumo zerado', Number(summary.tracks) + Number(summary.albums) + Number(summary.artists) === 0 && summary.top_artist_external_id === null);
+await as(db, alice);
+summary = await summaryOf(alice);
+check('reviews privadas: a propria pessoa ve o seu resumo', Number(summary.tracks) + Number(summary.albums) + Number(summary.artists) > 0);
+await db.query('update public.profiles set reviews_private = false where id = $1', [alice]);
+
+// Cenario controlado, numa conta nova: 2 musicas do Artist X ('10') com nota media
+// contra o proprio Artist Y ('11') com nota 5. Ganha quem tem mais avaliacoes.
+await admin(db);
+const erin = (await db.query("insert into auth.users (email) values ('erin@x.com') returning id")).rows[0].id;
+await as(db, erin);
+for (const [item, rating] of [[tr3, 4], [tr4, 3.5], [ar2, 5]]) {
+  await db.query('insert into public.reviews (user_id, media_item_id, rating) values ($1, $2, $3)', [erin, item, rating]);
+}
+summary = await summaryOf(erin);
+check('resumo separa musicas e artistas', Number(summary.tracks) === 2 && Number(summary.artists) === 1 && Number(summary.albums) === 0, JSON.stringify(summary));
+check('mais avaliado ganha pela quantidade, nao pela nota', summary.top_artist_external_id === '10' && Number(summary.top_artist_reviews) === 2, JSON.stringify(summary));
+// Apaga a conta (e, em cascata, as reviews) para nao mexer nos rankings testados abaixo.
+await admin(db);
+await db.query('delete from auth.users where id = $1', [erin]);
+
+await as(db, carol, { anonymous: true });
+summary = await summaryOf(carol);
+check('quem nao avaliou nada tem resumo zerado e sem artista', Number(summary.tracks) === 0 && Number(summary.albums) === 0 && Number(summary.artists) === 0 && summary.top_artist_name === null);
+check('visitante pode ver o resumo de outra pessoa', Number((await summaryOf(alice)).tracks) === (expectedByKind.track ?? 0));
+await asAnonRole(db);
+check('sem login nao executa get_profile_summary', (await attempt(db, 'select * from public.get_profile_summary($1)', [alice])).code === '42501');
+await as(db, alice);
+
 // ---------- rankings (media bayesiana) ----------
 await admin(db);
 await db.query('select public.refresh_rankings()');

@@ -13,6 +13,7 @@ const FILES = [
   '20261031120000_social_rpcs.sql',
   '20261031140000_profile_country.sql',
   '20261102120000_favorite_tracks.sql',
+  '20261108120000_profile_summary.sql',
 ];
 
 // Testa as migrations de supabase/migrations num Postgres local em memória (PGlite),

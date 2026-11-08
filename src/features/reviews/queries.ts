@@ -129,7 +129,8 @@ export function useItemReviews(mediaItemId: string | undefined) {
 function useInvalidateReviewData() {
   const queryClient = useQueryClient();
   return () => {
-    for (const key of ['media-item', 'review', 'reviews', 'rankings']) {
+    // profile-stats e profile-summary: o contador e o resumo do perfil mudam a cada review.
+    for (const key of ['media-item', 'review', 'reviews', 'rankings', 'profile-stats', 'profile-summary']) {
       void queryClient.invalidateQueries({ queryKey: [key] });
     }
   };

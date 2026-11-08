@@ -11,6 +11,7 @@ import { ReviewCardView } from '@/components/ReviewCardView';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { useProfile, useProfileStats, useToggleFollow, useUserReviews } from '@/features/social/queries';
 import { countryName, flagOf } from '@/lib/countries';
+import { ProfileActivity } from './ProfileActivity';
 import { useAuth, useAuthStatus } from '@/stores/auth';
 import { colors, fonts, spacing, type } from '@/theme';
 
@@ -74,6 +75,7 @@ export function ProfileView({ username }: { username: string }) {
     void profileQuery.refetch();
     void stats.refetch();
     void queryClient.invalidateQueries({ queryKey: ['favorites'] });
+    void queryClient.invalidateQueries({ queryKey: ['profile-summary', profile.id] });
     if (!hideReviews) void reviews.refetch();
   };
 
@@ -115,6 +117,8 @@ export function ProfileView({ username }: { username: string }) {
           },
         ]}
       />
+
+      {!hideReviews ? <ProfileActivity userId={profile.id} lastReview={items[0]} /> : null}
 
       <FavoriteSection kind="artist" userId={profile.id} isOwn={isOwn} />
       <FavoriteSection kind="track" userId={profile.id} isOwn={isOwn} />

@@ -62,6 +62,36 @@ export function useProfile(username: string) {
   });
 }
 
+export type ProfileSummary = {
+  tracks: number;
+  albums: number;
+  artists: number;
+  topArtist: { externalId: string; name: string; reviews: number } | null;
+};
+
+// Quanto a pessoa avaliou de cada tipo e o artista que ela mais avaliou.
+// O banco já devolve zerado quando as reviews dela são privadas para quem consulta.
+export function useProfileSummary(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['profile-summary', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<ProfileSummary> => {
+      const { data, error } = await supabase.rpc('get_profile_summary', { p_user_id: userId! });
+      if (error) throw error;
+      const row = data?.[0];
+      return {
+        tracks: Number(row?.tracks ?? 0),
+        albums: Number(row?.albums ?? 0),
+        artists: Number(row?.artists ?? 0),
+        topArtist:
+          row?.top_artist_external_id && row.top_artist_name
+            ? { externalId: row.top_artist_external_id, name: row.top_artist_name, reviews: Number(row.top_artist_reviews) }
+            : null,
+      };
+    },
+  });
+}
+
 export type ProfileStats = {
   followers: number;
   following: number;

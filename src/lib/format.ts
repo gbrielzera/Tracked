@@ -52,3 +52,17 @@ export function formatRating(value: number | null | undefined) {
   if (value == null) return '–';
   return value.toFixed(1).replace('.', ',');
 }
+
+// 1 -> "1 música", 3 -> "3 músicas"
+export const plural = (count: number, singular: string, pluralForm: string) =>
+  `${count} ${count === 1 ? singular : pluralForm}`;
+
+// { tracks: 42, albums: 7, artists: 0 } -> "42 músicas · 7 álbuns" (tipos zerados ficam de fora).
+export function formatReviewCounts(counts: { tracks: number; albums: number; artists: number }) {
+  const parts = [
+    counts.tracks > 0 ? plural(counts.tracks, 'música', 'músicas') : null,
+    counts.albums > 0 ? plural(counts.albums, 'álbum', 'álbuns') : null,
+    counts.artists > 0 ? plural(counts.artists, 'artista', 'artistas') : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
