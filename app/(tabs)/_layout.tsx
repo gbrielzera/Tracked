@@ -1,6 +1,8 @@
+import { View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { NotificationBell } from '@/components/NotificationBell';
+import { SettingsButton } from '@/components/SettingsButton';
 import { colors, fonts } from '@/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -34,6 +36,17 @@ export default function TabsLayout() {
           name={name}
           options={{
             title,
+            // No perfil, a engrenagem fica ao lado do sino.
+            ...(name === 'profile'
+              ? {
+                  headerRight: () => (
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <NotificationBell />
+                      <SettingsButton />
+                    </View>
+                  ),
+                }
+              : {}),
             tabBarIcon: ({ focused, size }) => (
               <Ionicons name={icon} size={size} color={focused ? colors.mustard : colors.fog} />
             ),

@@ -21,7 +21,9 @@ serviços gratuitos.
   denúncias.
 - **Notificações** dentro do app em tempo real e **push** no Android.
 - **Visitantes:** dá para explorar e comentar (até 3 vezes por dia) sem criar conta.
-- **Conta:** login por e-mail ou Google, recuperação de senha e exclusão da conta com todos os dados.
+- **Conta:** login por e-mail ou Google, recuperação de senha, e **Configurações** (engrenagem no cabeçalho do perfil)
+  com editar perfil, sair da conta e exclusão da conta com todos os dados.
+- **Carregando** com notas musicais passando por uma partitura, em todas as telas.
 
 ## Tecnologias
 
@@ -79,7 +81,7 @@ app/              Telas. No Expo Router, cada arquivo vira uma rota.
   (auth)/           Entrada: boas-vindas, login, cadastro, recuperar senha
   (tabs)/           Barra inferior: feed, trending, pesquisa, perfil
   track/ album/ artist/ user/ review/   Telas de detalhe
-  settings/ notifications.tsx           Editar perfil, favoritos, avisos
+  settings/ notifications.tsx           Configurações (engrenagem do perfil), editar perfil, favoritos, avisos
 src/
   components/       Componentes de interface (botões, estrelas, listas, seletor de país)
   features/         Lógica por assunto: auth, music, reviews, social, rankings, search, profile, notifications
