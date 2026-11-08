@@ -12,7 +12,7 @@ import { pushHistory } from '../../src/features/search/historyList.ts';
 import { chartCountries, COUNTRY_CHART_PLAYLISTS } from '../../src/services/music/charts.ts';
 import { createDeezerProvider } from '../../src/services/music/deezer.ts';
 import { MusicApiError } from '../../src/services/music/errors.ts';
-import { MAX_STEP, staffGeometry, stemsUp } from '../../src/lib/staff.ts';
+import { HOP_ROOM, HOPS, hopKeyframes, MAX_STEP, PLAY_AT, staffGeometry, stemsUp } from '../../src/lib/staff.ts';
 import { classifyFailure, failureMessage } from '../../src/lib/errors.ts';
 import { deezerImageAt } from '../../src/lib/images.ts';
 
@@ -130,6 +130,32 @@ check('haste para baixo nao sai pela base do componente', g1.headY(4) + g1.stemH
 check('haste sobe nas notas baixas e desce nas altas', stemsUp([2]) && !stemsUp([5]) && !stemsUp([4]));
 check('haste de colcheias ligadas segue a media', stemsUp([3, 4]) && !stemsUp([4, 5]));
 check('versao compacta e proporcional', near(staffGeometry(0.5).height * 2, g1.height) && near(staffGeometry(0.5).gap * 2, g1.gap));
+// Pulinhos e cor no meio da pauta
+const hk = hopKeyframes(1);
+const hk2 = hopKeyframes(2);
+const hopAt = (p: number) => {
+  // interpolacao linear entre os pontos, como faz o Animated
+  for (let i = 1; i < hk.input.length; i++) {
+    if (p <= hk.input[i]) {
+      const t = (p - hk.input[i - 1]) / (hk.input[i] - hk.input[i - 1]);
+      return hk.output[i - 1] + t * (hk.output[i] - hk.output[i - 1]);
+    }
+  }
+  return 0;
+};
+check('pulinhos: pontos crescem de 0 a 1 (exigencia do interpolate)', hk.input[0] === 0 && hk.input.at(-1) === 1 && hk.input.every((x, i) => i === 0 || x > hk.input[i - 1]));
+check('pulinhos: um valor por ponto', hk.input.length === hk.output.length);
+check('pulinhos: so sobem (negativo) e a nota entra e sai no lugar', hk.output.every((y) => y <= 0) && hk.output[0] === 0 && hk.output.at(-1) === 0);
+check('pulinhos: pousa entre um pulo e outro', near(hopAt(0.26), 0) && near(hopAt(0.4), 0) && near(hopAt(0.62), 0));
+check('pulinhos: o pulo pequeno sobe 6px', near(hopAt(0.2), -6));
+check('pulinhos: o pulo do meio e o maior, no meio da pauta', near(hopAt(PLAY_AT), -14) && Math.min(...hk.output) === -14);
+check('pulinhos: o pulo do meio e simetrico', near(hopAt(0.45), hopAt(0.55)));
+check('pulinhos: o arco e uma parabola (1/4 do pulo = 75% da altura)', near(hopAt(0.42 + 0.04), -14 * 0.75));
+check('pulinhos: nao ha pulo nas pontas (a nota esta aparecendo/sumindo)', near(hopAt(0.05), 0) && near(hopAt(0.95), 0));
+check('pulinhos acompanham a escala', near(Math.min(...hk2.output), -28) && hk2.input.join() === hk.input.join());
+check('o pulo maior e o do meio', HOPS.filter((h) => h.height === HOP_ROOM).length === 1 && HOPS.find((h) => h.height === HOP_ROOM)!.from < PLAY_AT && HOPS.find((h) => h.height === HOP_ROOM)!.to > PLAY_AT);
+check('a haste mais alta, no pulo mais alto, ainda cabe no componente', g1.headY(4) - g1.stemH - HOP_ROOM >= 0);
+check('10% maior: pauta e notas crescem juntas', near(staffGeometry(1.1).height / g1.height, 1.1) && near(staffGeometry(1.1).headW / g1.headW, 1.1) && near(staffGeometry(1.1).gap / g1.gap, 1.1));
 check('largura de nota ligada cobre as duas cabecas', g1.noteWidth === g1.pairGap + g1.headW);
 
 // ---------- tipo de falha (mensagens de erro) ----------

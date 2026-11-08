@@ -39,7 +39,7 @@ Duração prevista: **8 a 10 minutos**. Tudo roda num celular Android com o APK 
 | 6:30 | **Notificações**: com o app **fechado**, a segunda conta segue ou curte uma review | Mostre o **push** chegando, toque nele e mostre que abre a tela certa. Depois abra o sino e o contador zerando. |
 | 7:30 | Puxar a tela para atualizar no Feed | "Feed só com quem eu sigo, paginado sem pular nem repetir." |
 | 8:00 | (Opcional) Entrar na conta **descartável** e abrir a **engrenagem** do perfil e usar **Excluir conta** | "Exigência das lojas: apaga avatar, reviews e comentários de verdade." |
-| 8:30 | Encerrar | Stack: Expo/React Native, Supabase (Postgres, RLS, Realtime, Edge Functions), Deezer e Last.fm. 255 testes automáticos. |
+| 8:30 | Encerrar | Stack: Expo/React Native, Supabase (Postgres, RLS, Realtime, Edge Functions), Deezer e Last.fm. 268 testes automáticos. |
 
 ## Se algo der errado
 
