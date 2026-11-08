@@ -32,14 +32,14 @@ Duração prevista: **8 a 10 minutos**. Tudo roda num celular Android com o APK 
 | 0:30 | **Continuar como visitante**, abrir o Trending e uma review | "Dá para explorar sem conta. Visitante comenta até 3 vezes por dia, mas não avalia, curte nem segue. O limite é garantido pelo banco, não só pela tela." |
 | 1:30 | Tentar avaliar como visitante e tocar em "Criar conta" | "O convite para criar conta mantém os comentários que ele já fez." Entre na conta principal. |
 | 2:00 | **Pesquisa**: digitar "avril" | "Os resultados aparecem enquanto digita. A aba Tudo mostra um pouco de cada tipo, e os filtros refinam." Toque em "Ver todos". Volte e mostre o **histórico** de buscas. |
-| 3:00 | Abrir uma música, dar **nota com meia estrela** e publicar uma review | "Uma review por pessoa por item, editável. Dá para arrastar o dedo nas estrelas." Mostre o resumo com **editar/excluir**. |
+| 3:00 | Abrir uma música, dar **nota com meia estrela** e publicar uma review | "Uma review por pessoa por item, editável. Dá para arrastar o dedo nas estrelas." Mostre o resumo com **editar/excluir**. Abra a review e toque em **Compartilhar como imagem**. |
 | 4:00 | **Trending > Em alta**, trocar o país (ex.: Portugal) | "O Deezer só tem o ranking global, então usamos as playlists oficiais de cada país." |
 | 4:45 | **Trending > Mais bem avaliados** | "Ranking da própria comunidade, pela média bayesiana: uma nota 5 sozinha não passa na frente de um item com muitas notas boas." |
 | 5:30 | **Perfil**: foto, bandeira, contadores, Top 5 artistas e músicas do momento; abrir a **engrenagem** (*Configurações > Editar perfil*) e mostrar **Reviews privadas** | "Com o interruptor ligado, nenhuma review aparece para os outros. A regra está no banco (RLS), e foi testada." |
 | 6:30 | **Notificações**: com o app **fechado**, a segunda conta segue ou curte uma review | Mostre o **push** chegando, toque nele e mostre que abre a tela certa. Depois abra o sino e o contador zerando. |
 | 7:30 | Puxar a tela para atualizar no Feed | "Feed só com quem eu sigo, paginado sem pular nem repetir." |
 | 8:00 | (Opcional) Entrar na conta **descartável** e abrir a **engrenagem** do perfil e usar **Excluir conta** | "Exigência das lojas: apaga avatar, reviews e comentários de verdade." |
-| 8:30 | Encerrar | Stack: Expo/React Native, Supabase (Postgres, RLS, Realtime, Edge Functions), Deezer e Last.fm. 200 testes automáticos. |
+| 8:30 | Encerrar | Stack: Expo/React Native, Supabase (Postgres, RLS, Realtime, Edge Functions), Deezer e Last.fm. 255 testes automáticos. |
 
 ## Se algo der errado
 
